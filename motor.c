@@ -57,9 +57,9 @@ void Motor_Init(void){
 }
 
 void Motor_SetPWM(int left_pwm, int right_pwm){
-    TIM2->CCR1 = left_pwm;               // PA0: Motor A IN1
-    TIM2->CCR2 = PWM_MAX - left_pwm;     // PA1: Motor A IN2
-    TIM2->CCR3 = right_pwm;              // PA2: Motor B IN1
-    TIM2->CCR4 = PWM_MAX - right_pwm;    // PA3: Motor B IN2
+    TIM2->CCR1 = left_pwm;               // PA0: Motor A H-Bridge IN1
+    TIM2->CCR2 = PWM_MAX - left_pwm;     // PA1: Motor A H-Bridge IN2
+    TIM2->CCR3 = right_pwm;              // PA2: Motor B H-Bridge IN1
+    TIM2->CCR4 = PWM_MAX - right_pwm;    // PA3: Motor B H-Bridge IN2
 }
 
