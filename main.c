@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "../Common/Include/stm32l051xx.h"
+#include "motor.h"
 
 #define F_CPU 32000000L
 
@@ -14,11 +17,11 @@ void delay(int dly)
 }
 
 void wait_1ms(void)
-{
-	// For SysTick info check the STM32L0xxx Cortex-M0 programming manual page 85.
+{ng manual page 85.
 	SysTick->LOAD = (F_CPU/1000L) - 1;  // set reload register, counter rolls over from zero, hence -1
 	SysTick->VAL = 0; // load the SysTick counter
-	SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk; // Enable SysTick IRQ and SysTick Timer */
+	SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABL
+	// For SysTick info check the STM32L0xxx Cortex-M0 programmiE_Msk; // Enable SysTick IRQ and SysTick Timer */
 	while((SysTick->CTRL & BIT16)==0); // Bit 16 is the COUNTFLAG.  True when counter rolls over from zero.
 	SysTick->CTRL = 0x00; // Disable Systick counter
 }
