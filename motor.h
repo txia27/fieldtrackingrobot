@@ -7,6 +7,7 @@
 #define PWM_MAX 1000 // Maximum PWM value for full speed
 #define PWM_MIN 100 // Minimum PWM value to overcome motor deadzone
 #define PID_DT_MS 20 // PID loop time step in milliseconds
+#define PID_DT_S (PID_DT_MS / 1000.0f)
 
 //==H-BRIDGE PIN ASSIGNMENTS==//
 // 1. Motor A (Left): PWM on PA0 and PA1

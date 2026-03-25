@@ -99,38 +99,16 @@ long int GetPeriod (int n)
 
 void main(void)
 {
-	long int count;
-	float T, f, C;
-	
-	RCC->IOPENR |= 0x00000001; // peripheral clock enable for port A
-	
-	GPIOA->MODER &= ~(BIT16 | BIT17); // Make pin PA8 input
-	// Activate pull up for pin PA8:
-	GPIOA->PUPDR |= BIT16; 
-	GPIOA->PUPDR &= ~(BIT17); 
+	Motor_Init();
+	PIDState pid;
+	PID_Init(&pid, 0.1f, 0.0f, 0.0f); // Kp = 0.1, Ki = 0, Kd = 0.0 (Tune these as we test)
 
-	waitms(500); // Wait for putty to start.
-	printf("Period measurement using the Systick free running counter.\r\n"
-	      "Connect signal to PA8 (pin 18).\r\n");
-	
-	while(1)
-	{
-		count=GetPeriod(100);
-		if(count>0)
-		{
-			T=count/(F_CPU*100.0); // Since we have the time of 100 periods, we need to divide by 100
-			f=1.0/T;
-			C = f / 1.44;
-			C = C * 6000;
-			C = (1 / C) * 1000000;
-			printf("\r\033[Kf=%.2fHz, count=%d\n", f, count);
-			printf("\r\033[KC=%.5fF\r", C);
-		}
-		else
-		{
-			printf("NO SIGNAL                     \r");
-		}
-		fflush(stdout); // GCC printf wants a \n in order to send something.  If \n is not present, we fflush(stdout)
-		waitms(200);
+	float base_speed = 600.0f; // Speed can be between 0 to 1000, tune as we test
+
+	while(1){
+		float error = adc_left - adc_right; // Implement these variables later
+		float correction = PID_Compute(&pid, error);
+		Motor_Drive(base_speed, correction);
+		waitms(PID_DT_MS);
 	}
 }

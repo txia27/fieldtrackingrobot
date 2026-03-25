@@ -56,10 +56,62 @@ void Motor_Init(void){
     TIM2->CR1 |= BIT0;
 }
 
+/*
+/ Input range: -1000 to 1000
+/ 1000 = Full Forward
+/ -1000 = Full Reverse
+/ 0 = Brake
+*/
 void Motor_SetPWM(int left_pwm, int right_pwm){
-    TIM2->CCR1 = left_pwm;               // PA0: Motor A H-Bridge IN1
-    TIM2->CCR2 = PWM_MAX - left_pwm;     // PA1: Motor A H-Bridge IN2
-    TIM2->CCR3 = right_pwm;              // PA2: Motor B H-Bridge IN1
-    TIM2->CCR4 = PWM_MAX - right_pwm;    // PA3: Motor B H-Bridge IN2
+    if(left_pwm > PWM_MAX) left_pwm = PWM_MAX;
+    if(left_pwm < PWM_MAX) left_pwm = -PWM_MAX;
+    if(right_pwm > PWM_MAX) right_pwm = PWM_MAX;
+    if(right_pwm < PWM_MAX) right_pwm = -PWM_MAX;
+
+    TIM2->CCR1 = (PWM_MAX + left_pwm) / 2;               // PA0: Motor A H-Bridge IN1
+    TIM2->CCR2 = (PWM_MAX - left_pwm) / 2;               // PA1: Motor A H-Bridge IN2
+    TIM2->CCR3 = (PWM_MAX + right_pwm) / 2;              // PA2: Motor B H-Bridge IN1
+    TIM2->CCR4 = (PWM_MAX - right_pwm) / 2;              // PA3: Motor B H-Bridge IN2
+}
+
+// Tune PID values during testing
+void PID_Init(PIDState* pid, float Kp, float Ki, float Kd){
+    pid->Kp = Kp;
+    pid->Kd = Kd;
+    pid->Ki = Ki;
+    pid->integral = 0;
+    pid->prev_error = 0;
+}
+
+// error = adc_left - adc_right
+// IF error is negative: right > left, right signal is stronger so robot drifted right
+// IF error is positive: left > right, left signal is stronger so robot drifted left
+// IF error = 0: left = right, robot is on the line!
+float PID_Compute(PIDState* pid, float error){
+    pid->integral += error * PID_DT_S;
+    float derivative = (error - pid->prev_error) / PID_DT_S;
+    pid->prev_error = error;
+
+    if(pid->integral > PWM_MAX) pid->integral = PWM_MAX;
+    if(pid->integral < -PWM_MAX) pid->integral = -PWM_MAX;
+
+    return (pid->Kp*error) + (pid->Ki*pid->integral) + (pid->Kd*derivative);
+}
+
+void Motor_Drive(float base_speed, float correction){
+    float left_pwm = base_speed + correction;
+    float right_pwm = base_speed - correction;
+
+    if((int)left_pwm > PWM_MAX) left_pwm = PWM_MAX;
+    if((int)left_pwm < -PWM_MAX) left_pwm = -PWM_MAX;
+    if((int)right_pwm > PWM_MAX) right_pwm = PWM_MAX;
+    if((int)right_pwm < -PWM_MAX) right_pwm = -PWM_MAX;
+
+    if(left_pwm > 0 && left_pwm < PWM_MIN) left_pwm = PWM_MIN;
+    if(left_pwm < 0 && left_pwm > -PWM_MIN) left_pwm = -PWM_MIN;
+    if(right_pwm > 0 && right_pwm < PWM_MIN) right_pwm = PWM_MIN;
+    if(right_pwm < 0 && right_pwm > -PWM_MIN) right_pwm = -PWM_MIN;
+
+    Motor_SetPWM((int)left_pwm,(int)right_pwm);
 }
 
