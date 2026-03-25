@@ -5,6 +5,9 @@
 #include <stdbool.h>
 #include "../Common/Include/stm32l051xx.h"
 #include "motor.h"
+#include "ADC.h"
+#include "collision.h"
+#include "decoder.h"
 
 #define F_CPU 32000000L
 
@@ -17,10 +20,10 @@ void delay(int dly)
 }
 
 void wait_1ms(void)
-{ng manual page 85.
+{
 	SysTick->LOAD = (F_CPU/1000L) - 1;  // set reload register, counter rolls over from zero, hence -1
 	SysTick->VAL = 0; // load the SysTick counter
-	SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABL
+	SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk;
 	// For SysTick info check the STM32L0xxx Cortex-M0 programmiE_Msk; // Enable SysTick IRQ and SysTick Timer */
 	while((SysTick->CTRL & BIT16)==0); // Bit 16 is the COUNTFLAG.  True when counter rolls over from zero.
 	SysTick->CTRL = 0x00; // Disable Systick counter
@@ -100,6 +103,13 @@ long int GetPeriod (int n)
 void main(void)
 {
 	Motor_Init();
+	Motor_SetPWM(500,500);
+	waitms(2000);
+	Motor_SetPWM(0,0);
+}
+
+
+	/*Motor_Init();
 	PIDState pid;
 	PID_Init(&pid, 0.1f, 0.0f, 0.0f); // Kp = 0.1, Ki = 0, Kd = 0.0 (Tune these as we test)
 
@@ -110,5 +120,6 @@ void main(void)
 		float correction = PID_Compute(&pid, error);
 		Motor_Drive(base_speed, correction);
 		waitms(PID_DT_MS);
-	}
-}
+	}*/
+
+	

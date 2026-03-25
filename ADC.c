@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
-#include "stm32l051xx.h"
+#include "../Common/Include/stm32l051xx.h"
 
 void ADC_Init(void)
 {
@@ -24,7 +24,7 @@ void ADC_Init(void)
     for (volatile int i = 0; i < 1000; i++); // delay
 
     //Sampling time (VERY IMPORTANT for your circuit)
-    ADC1->SMPR |= (7 << ADC_SMPR_SMP_Pos);  // max sample time
+    ADC1->SMPR |= 7;  // max sample time
 
     //Enable ADC
     ADC1->CR |= ADC_CR_ADEN;

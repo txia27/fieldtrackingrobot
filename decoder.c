@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "decoder.h"
+#include "../Common/Include/stm32l051xx.h"
 
 //need to configure pin (likely PA1 or PA6) as input from receiver wiring
 //configure timer 2 to measure the period of the signal at that pin, and use that to determine which command was sent by the encoder
@@ -118,22 +119,3 @@ int decode (int signal_length)
     return command_signal;
 }
 
-
-int main(void)
-{
-
-    /* might want to move this into a centralized initialization function */
-    initialize_decoder();
-    initialize_timer22();
-    
-    while(1)
-    {
-        signal_length = pulse_width; // measures the length of the signal received, and stores it in signal_length
-        command_signal = decode(signal_length); // decodes the signal_length into a command_signal (0-7), and stores it in command_signal
-        
-        //send command_signal to the rest of the system
-
-        pulse_width = 0; // reset pulse width for next loop
-        command_signal = 0; // reset command signal for next loop
-    }
-}

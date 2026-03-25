@@ -33,6 +33,17 @@ collision.o: collision.c collision.h
 
 vl53l0x.o: vl53l0x.c vl53l0x.h
 	$(CC) -c $(CCFLAGS) vl53l0x.c -o vl53l0x.o
+motor.o: motor.c motor.hex
+	$(CC) -c $(CCFLAGS) collision.c -o collision.o 
+
+ADC.o: ADC.c ADC.h
+	$(CC) -c $(CCFLAGS) ADC.c -o ADC.o 
+
+decoder.o: decoder.c decoder.h 
+	$(CC) -c $(CCFLAGS) decoder.c -o decoder.o
+
+uart.0: uart.c uart.h 
+	$(CC) -c $(CCFLAGS) uart.c -o uart.o 
 
 newlib_stubs.o: ../Common/Source/newlib_stubs.c
 	$(CC) -c $(CCFLAGS) ../Common/Source/newlib_stubs.c -o newlib_stubs.o
