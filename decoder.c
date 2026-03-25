@@ -22,19 +22,20 @@
 #include <stdlib.h>
 #include <math.h>
 #include "decoder.h"
-#include "Common/Include/stm32l051xx.h"
 
-//need to configure pin (likely PA1 or PA6) as input from receiver wiring
+//need to configure pin PA7 (pin 13)
 //configure timer 2 to measure the period of the signal at that pin, and use that to determine which command was sent by the encoder
 
 volatile int signal_length = 0;
 volatile int signal_start = 0;
 volatile int capture = 0;
-volatile int pulse_width = 0;
 volatile int command_signal = 0;
+volatile int pulse_width = 0;
+volatile int signal_flag = 0; // flag to indicate a new signal has been captured
 
 const float commands[8] = {500, 800, 1100, 1400, 1700, 2000, 2300, 2600};
 // change these numbers depending on how the encoder is configured (eg. 0.001s, 0.002s)
+// currently in microseconds
 
 
 void initialize_decoder(void)
@@ -99,6 +100,7 @@ void TIM22_IRQHandler(void)
         }
 
         TIM22->SR &= ~TIM_SR_CC2IF; // clear interrupt flag
+        signal_flag = 1; // set flag to indicate a new signal has been captured
     }
 }
 
@@ -114,9 +116,8 @@ int decode (int signal_length)
     else if (signal_length < commands[4] + ERROR) command_signal = 5; // move reverse           (4.5 - 5.5)
     else if (signal_length < commands[5] + ERROR) command_signal = 6; // turn around            (5.5 - 6.5)
     else if (signal_length < commands[6] + ERROR) command_signal = 7; // mode                   (6.5 - 7.5)
-    else if (signal_length < commands[7] + ERROR) command_signal = 8; // select                 (7.5 - 8.5)
+    else if (signal_length < commands[7] + ERROR) command_signal = 8; // start                  (7.5 - 8.5)
     else command_signal = 99; // error state, send error message (beep?)
 
     return command_signal;
 }
-
