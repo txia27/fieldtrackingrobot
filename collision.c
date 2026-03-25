@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "../Common/Include/stm32l051xx.h"
-#include "../Common/Include/serial.h"
+#include "Common/Include/stm32l051xx.h"
+#include "Common/Include/serial.h"
 #include "vl53l0x.h"
 
 // LQFP32 pinout
@@ -171,9 +171,18 @@ void colli(void)
 	        "Compiled: %s, %s\r\n",
 	        __FILE__, __DATE__, __TIME__);
 	
+    printf("Before I2C_init\r\n");
+    fflush(stdout);
+
 	I2C_init();
 
+    printf("After I2C_init\r\n");
+    fflush(stdout);
+
     validate_I2C_interface();
+
+    printf("After validate\r\n");
+    fflush(stdout);
 
 	success = vl53l0x_init();
 	if(success)

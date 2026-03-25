@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "motor.h"
-#include "../Common/Include/stm32l051xx.h"
+#include "Common/Include/stm32l051xx.h"
 
 void Motor_Init(void){
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN; // Enable TIM2

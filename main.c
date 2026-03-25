@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "../Common/Include/stm32l051xx.h"
+#include "Common/Include/stm32l051xx.h"
 #include "motor.h"
 #include "ADC.h"
 #include "collision.h"
