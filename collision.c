@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "../Common/Include/stm32l051xx.h"
-#include "../Common/Include/serial.h"
+#include "Common/Include/stm32l051xx.h"
+#include "Common/Include/serial.h"
 #include "vl53l0x.h"
 
 // LQFP32 pinout

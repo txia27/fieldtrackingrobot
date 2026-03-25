@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "decoder.h"
-#include "../Common/Include/stm32l051xx.h"
+#include "Common/Include/stm32l051xx.h"
 
 //need to configure pin (likely PA1 or PA6) as input from receiver wiring
 //configure timer 2 to measure the period of the signal at that pin, and use that to determine which command was sent by the encoder
