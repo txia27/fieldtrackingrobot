@@ -10,7 +10,7 @@ LIBPATH1=$(subst \libgcc.a,,$(shell dir /s /b "$(GCCPATH)*libgcc.a" | find "v6-m
 LIBPATH2=$(subst \libc_nano.a,,$(shell dir /s /b "$(GCCPATH)*libc_nano.a" | find "v6-m"))
 LIBSPEC=-L"$(LIBPATH1)" -L"$(LIBPATH2)"
 
-OBJS=main.o startup.o serial.o newlib_stubs.o
+OBJS=main.o startup.o serial.o newlib_stubs.o collision.o
 
 # Notice that floating point is enabled with printf (-u _printf_float)
 main.hex: $(OBJS)
@@ -27,6 +27,9 @@ startup.o: ../Common/Source/startup.c
 serial.o: ../Common/Source/serial.c
 	$(CC) -c $(CCFLAGS) ../Common/Source/serial.c -o serial.o
 	
+collision.o: collision.c collision.h
+	$(CC) -c $(CCFLAGS) collision.c -o collision.o
+
 newlib_stubs.o: ../Common/Source/newlib_stubs.c
 	$(CC) -c $(CCFLAGS) ../Common/Source/newlib_stubs.c -o newlib_stubs.o
 
