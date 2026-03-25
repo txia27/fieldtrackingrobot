@@ -159,10 +159,9 @@ void validate_I2C_interface (void)
     printf("\r\n");
 }
 
-void colli(void)
+void coll_init(void)
 {
 	unsigned char success;
-	unsigned short range=0;
 	
 	waitms(500);
 	printf("\x1b[2J\x1b[1;1H"); // Clear screen using ANSI escape sequence.
@@ -170,19 +169,10 @@ void colli(void)
 	        "File: %s\r\n"
 	        "Compiled: %s, %s\r\n",
 	        __FILE__, __DATE__, __TIME__);
-	
-    printf("Before I2C_init\r\n");
-    fflush(stdout);
 
 	I2C_init();
 
-    printf("After I2C_init\r\n");
-    fflush(stdout);
-
     validate_I2C_interface();
-
-    printf("After validate\r\n");
-    fflush(stdout);
 
 	success = vl53l0x_init();
 	if(success)
@@ -193,17 +183,18 @@ void colli(void)
 	{
 		printf("VL53L0x initialization failed.\r\n");
 	}
-	
-    while (1)
-    {
-        success = vl53l0x_read_range_single(&range);
-		if(success)
-		{
-	        printf("D: %4u (mm)\r", range);
-	        // The implementation of printf() in newlib doesn't transmit until a '\n'
-	        // is found or the buffer is full, so flush(stdout); to transmit now!!!
-	        fflush(stdout); 
-	    	waitms(100);
+}
+
+void coll_loop(void){
+	unsigned char success;
+	unsigned short range=0;
+
+	success = vl53l0x_read_range_single(&range);
+	if(success)
+	{
+		printf("D: %4u (mm)\r", range);    // The implementation of printf() in newlib doesn't transmit until a '\n'
+	     // is found or the buffer is full, so flush(stdout); to transmit now!!!
+	    fflush(stdout); 
+	    waitms(100);
 		}
-	}	
 }

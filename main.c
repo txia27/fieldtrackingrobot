@@ -11,6 +11,9 @@
 
 #define F_CPU 32000000L
 
+//=========ABSTRACT=========//
+// Measures the period of a square wave on pin PA8
+
 void delay(int dly)
 {
 	while( dly--);
@@ -99,10 +102,12 @@ long int GetPeriod (int n)
 
 void main(void)
 {
-	Motor_Init();
-	Motor_SetPWM(500,500);
-	waitms(2000);
-	Motor_SetPWM(0,0);
+	//Motor_Init();
+	//Motor_SetPWM(500,500);
+	//waitms(2000);
+	//Motor_SetPWM(0,0);
+
+	colli();
 }
 
 
