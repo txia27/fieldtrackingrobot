@@ -1,4 +1,7 @@
-int decode (int signal length);
-float measure_signal_length(void);
+#define ERROR 150
 
-#define ERROR 0.5
+void initialize_decoder(void);
+void initialize_timer22(void);
+int decode(int signal_length);
+
+extern volatile int command_signal;
