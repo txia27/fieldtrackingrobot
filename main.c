@@ -11,9 +11,6 @@
 
 #define F_CPU 32000000L
 
-//=========ABSTRACT=========//
-// Measures the period of a square wave on pin PA8
-
 void delay(int dly)
 {
 	while( dly--);

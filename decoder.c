@@ -31,6 +31,7 @@ volatile int signal_length = 0;
 volatile int signal_start = 0;
 volatile int capture = 0;
 volatile int pulse_width = 0;
+volatile int command_signal = 0;
 
 const float commands[8] = {500, 800, 1100, 1400, 1700, 2000, 2300, 2600};
 // change these numbers depending on how the encoder is configured (eg. 0.001s, 0.002s)

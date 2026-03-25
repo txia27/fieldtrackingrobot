@@ -26,20 +26,8 @@
 #define F_CPU 32000000L
 #define NUNCHUK_ADDRESS 0x52
 
-void wait_1ms(void)
-{
-	// For SysTick info check the STM32l0xxx Cortex-M0 programming manual.
-	SysTick->LOAD = (F_CPU/1000L) - 1;  // set reload register, counter rolls over from zero, hence -1
-	SysTick->VAL = 0; // load the SysTick counter
-	SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk; // Enable SysTick IRQ and SysTick Timer */
-	while((SysTick->CTRL & BIT16)==0); // Bit 16 is the COUNTFLAG.  True when counter rolls over from zero.
-	SysTick->CTRL = 0x00; // Disable Systick counter
-}
-
-void waitms(int len)
-{
-	while(len--) wait_1ms();
-}
+extern void wait_1ms(void);
+extern void waitms(int len);
 
 void I2C_init (void)
 {
@@ -171,7 +159,7 @@ void validate_I2C_interface (void)
     printf("\r\n");
 }
 
-void main(void)
+void colli(void)
 {
 	unsigned char success;
 	unsigned short range=0;

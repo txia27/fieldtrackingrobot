@@ -10,7 +10,7 @@ LIBPATH1=$(subst \libgcc.a,,$(shell dir /s /b "$(GCCPATH)*libgcc.a" | find "v6-m
 LIBPATH2=$(subst \libc_nano.a,,$(shell dir /s /b "$(GCCPATH)*libc_nano.a" | find "v6-m"))
 LIBSPEC=-L"$(LIBPATH1)" -L"$(LIBPATH2)"
 
-OBJS=main.o startup.o serial.o newlib_stubs.o collision.o
+OBJS=main.o startup.o serial.o newlib_stubs.o collision.o motor.o ADC.o decoder.o uart.o vl53l0x.o
 
 # Notice that floating point is enabled with printf (-u _printf_float)
 main.hex: $(OBJS)
@@ -30,17 +30,20 @@ serial.o: ../Common/Source/serial.c
 collision.o: collision.c collision.h
 	$(CC) -c $(CCFLAGS) collision.c -o collision.o
 
-motor.o: motor.c motor.hex
-	$(CC) -c $(CCFLAGS) collision.c -o collision.o 
+motor.o: motor.c motor.h
+	$(CC) -c $(CCFLAGS) motor.c -o motor.o 
 
 ADC.o: ADC.c ADC.h
 	$(CC) -c $(CCFLAGS) ADC.c -o ADC.o 
 
-decoder.o: decoder.c decoder.h 
+decoder.o: decoder.c decoder.h
 	$(CC) -c $(CCFLAGS) decoder.c -o decoder.o
 
-uart.0: uart.c uart.h 
+uart.o: uart.c uart.h
 	$(CC) -c $(CCFLAGS) uart.c -o uart.o 
+
+vl53l0x.o: vl53l0x.c vl53l0x.h
+	$(CC) -c $(CCFLAGS) vl53l0x.c -o vl53l0x.o
 
 newlib_stubs.o: ../Common/Source/newlib_stubs.c
 	$(CC) -c $(CCFLAGS) ../Common/Source/newlib_stubs.c -o newlib_stubs.o
