@@ -68,7 +68,7 @@ putty:
 	@sputty
 	
 explorer:
-	@explorer .
+	@explorer
 
 dummy: main.map main.hex
 	@echo Hello from 'dummy' target...

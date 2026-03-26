@@ -117,19 +117,16 @@ void main(void)
 	{
 		if (signal_flag) // check if a new signal has been captured
 		{
+			TIM22->DIER &= ~TIM_DIER_CC2IE;
 			signal_flag = 0; // reset flag
 			//signal_length = pulse_width; // store the pulse width of the captured signal
 			int command = decode(pulse_width); // decode the signal length to determine the command
-			if (command < 99) {
-				printf("Command: %d, Pulse Width: %d microseconds\n", command, pulse_width); // print the command and pulse width for debugging
-			}
 			
-			else {
-				printf("Error: Invalid signal length\n");
-			}
-
-			pulse_width = 0; // reset signal length for next capture
+			printf("Pulse Width: %d microseconds\n", pulse_width); // print the command and pulse width for debugging
+			TIM22->DIER |= TIM_DIER_CC2IE;
 		}
+
+		waitms(200);
 	}
 
 
