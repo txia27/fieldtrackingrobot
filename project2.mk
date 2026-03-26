@@ -14,7 +14,7 @@ OBJS=main.o startup.o serial.o newlib_stubs.o collision.o motor.o ADC.o decoder.
 
 # Notice that floating point is enabled with printf (-u _printf_float)
 main.hex: $(OBJS)
-	$(LD) $(OBJS) $(LIBSPEC) -Os -u _printf_float -nostdlib -lnosys -lgcc -T Common/LDscripts/stm32l051xx.ld --cref -Map main.map -o main.elf
+	$(LD) $(OBJS) $(LIBSPEC) -Os -nostdlib  -u _printf_float -lnosys -lgcc -T Common/LDscripts/stm32l051xx.ld --cref -Map main.map -o main.elf
 	arm-none-eabi-objcopy -O ihex main.elf main.hex
 	@echo Success!
 
@@ -68,7 +68,7 @@ putty:
 	@sputty
 	
 explorer:
-	@explorer .
+	@explorer
 
 dummy: main.map main.hex
 	@echo Hello from 'dummy' target...

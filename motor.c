@@ -64,9 +64,9 @@ void Motor_Init(void){
 */
 void Motor_SetPWM(int left_pwm, int right_pwm){
     if(left_pwm > PWM_MAX) left_pwm = PWM_MAX;
-    if(left_pwm < PWM_MAX) left_pwm = -PWM_MAX;
+    if(left_pwm < -PWM_MAX) left_pwm = -PWM_MAX;
     if(right_pwm > PWM_MAX) right_pwm = PWM_MAX;
-    if(right_pwm < PWM_MAX) right_pwm = -PWM_MAX;
+    if(right_pwm < -PWM_MAX) right_pwm = -PWM_MAX;
 
     TIM2->CCR1 = (PWM_MAX + left_pwm) / 2;               // PA0: Motor A H-Bridge IN1
     TIM2->CCR2 = (PWM_MAX - left_pwm) / 2;               // PA1: Motor A H-Bridge IN2
@@ -87,7 +87,7 @@ void PID_Init(PIDState* pid, float Kp, float Ki, float Kd){
 // IF error is negative: right > left, right signal is stronger so robot drifted right
 // IF error is positive: left > right, left signal is stronger so robot drifted left
 // IF error = 0: left = right, robot is on the line!
-float PID_Compute(PIDState* pid, float error){
+float PID_Compute(PIDState* pid, uint16_t error){
     pid->integral += error * PID_DT_S;
     float derivative = (error - pid->prev_error) / PID_DT_S;
     pid->prev_error = error;

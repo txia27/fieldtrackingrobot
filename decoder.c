@@ -18,6 +18,7 @@
 //	VSS   -	|16		17|  -  VDD
 //		     ---------
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -59,7 +60,7 @@ void initialize_decoder(void)
 void initialize_timer22(void)
 {
     RCC->APB2ENR |= RCC_APB2ENR_TIM22EN; // enable clock for timer 22
-    TIM22->PSC = 16 - 1; // set prescaler to 16 (assuming 16 MHz clock, this gives us a timer frequency of 1 MHz, or a resolution of 1 microsecond)
+    TIM22->PSC = 32 - 1; // set prescaler to 32 (assuming 32 MHz clock, this gives us a timer frequency of 1 MHz, or a resolution of 1 microsecond)
     TIM22->ARR = 0xFFFF; // set auto-reload register to maximum
 
     TIM22->CCMR1 &= ~(0b11 << 8); // clear bits for channel 2
@@ -76,7 +77,7 @@ void initialize_timer22(void)
 }
 
 
-void TIM22_IRQHandler(void)
+void TIM22_Handler(void)
 {
     if (TIM22->SR & TIM_SR_CC2IF) // check if capture/compare interrupt flag is set for channel 2
     {
@@ -123,29 +124,3 @@ int decode (int signal_length)
 
     return command_signal;
 }
-
-
-/*void main(void)
-{
-	initialize_decoder();
-	initialize_timer22();
-
-	while (1)
-	{
-		if (signal_flag) // check if a new signal has been captured
-		{
-			signal_flag = 0; // reset flag
-			signal_length = pulse_width; // store the pulse width of the captured signal
-			int command = decode(signal_length); // decode the signal length to determine the command
-			if (command < 99) {
-				printf("Command: %d, Pulse Width: %d microseconds\n", command, pulse_width); // print the command and pulse width for debugging
-			}
-
-			if (command == 99) {
-				printf("Error: Invalid signal length\n");
-			}
-			
-			signal_length = 0; // reset signal length for next capture
-		}
-	}
-}*/

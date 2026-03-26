@@ -100,34 +100,53 @@ long int GetPeriod (int n)
 //       PB1 -|15      18|- PA8  (Measure the period at this pin)
 //       VSS -|16      17|- VDD
 //             ----------
-char msg[64];
+
 void main(void)
 {
-	//ADC_Init();
+	ADC_Init();
 
 	//Motor_Init();
 	//Motor_SetPWM(500,500);
 	//waitms(2000);
 	//Motor_SetPWM(0,0);
 
+	initialize_decoder();
+	initialize_timer22();
+
+	while (1)
+	{
+		if (signal_flag) // check if a new signal has been captured
+		{
+			TIM22->DIER &= ~TIM_DIER_CC2IE;
+			signal_flag = 0; // reset flag
+			//signal_length = pulse_width; // store the pulse width of the captured signal
+			int command = decode(pulse_width); // decode the signal length to determine the command
+			
+			printf("Pulse Width: %d microseconds\n", pulse_width); // print the command and pulse width for debugging
+			TIM22->DIER |= TIM_DIER_CC2IE;
+		}
+
+		waitms(200);
+	}
+
 
 	/*
     while (1)
     {
         uint16_t left   = ADC_Read_Channel(4);
+		printf("Left: %d\r\n", left);
         uint16_t center = ADC_Read_Channel(5);
+		printf("Center: %d\r\n", center);
         uint16_t right  = ADC_Read_Channel(6);
+		printf("Right: %d\r\n", right);
 
-        // format string manually (no printf)
-        sprintf(msg, "L:%u C:%u R:%u\r\n", left, center, right);
-
-        eputs(msg);
-
+       
         for (volatile int i = 0; i < 200000; i++);
     }
-	*/
+		
+	
 
-	printf("Peter Lake BBL\r\n");
+	//printf("Peter Lake BBL\r\n");*/
 }
 
 
@@ -138,7 +157,7 @@ void main(void)
 	float base_speed = 600.0f; // Speed can be between 0 to 1000, tune as we test
 
 	while(1){
-		float error = adc_left - adc_right; // Implement these variables later
+		uint16_t error = ADC_Read_Channel(4) - ADC_Read_Channel(6); // Implement these variables later
 		float correction = PID_Compute(&pid, error);
 		Motor_Drive(base_speed, correction);
 		waitms(PID_DT_MS);

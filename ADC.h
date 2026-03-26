@@ -5,6 +5,6 @@
 #include <stdbool.h>
 
 void ADC_Init(void);
-uint16_t ADC_Read(uint8_t ch);
+uint16_t ADC_Read_Channel(uint8_t ch);
 
-#endif
+#endif 	
