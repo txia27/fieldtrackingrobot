@@ -35,7 +35,7 @@ volatile int command_signal = 0;
 volatile int pulse_width = 0;
 volatile int signal_flag = 0; // flag to indicate a new signal has been captured
 
-const int commands[8] = {500, 800, 1100, 1400, 1700, 2000, 2300, 2600};
+const int commands[12] = {2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000};
 // change these numbers depending on how the encoder is configured (eg. 0.001s, 0.002s)
 // currently in microseconds
 
@@ -120,6 +120,10 @@ int decode (int signal_length)
     else if (signal_length < commands[5] + ERROR) command_signal = 6; // turn around            (5.5 - 6.5)
     else if (signal_length < commands[6] + ERROR) command_signal = 7; // mode                   (6.5 - 7.5)
     else if (signal_length < commands[7] + ERROR) command_signal = 8; // start                  (7.5 - 8.5)
+    else if (signal_length < commands[8] + ERROR) command_signal = 9; // fwd-right              (8.5 - 9.5)
+    else if (signal_length < commands[9] + ERROR) command_signal = 10; // fwd-left              (9.5 - 10.5)
+    else if (signal_length < commands[10] + ERROR) command_signal = 11; // back-right           (10.5 - 11.5)
+    else if (signal_length < commands[11] + ERROR) command_signal = 12; // back-left            (11.5 - 12.5)
     else command_signal = 99; // error state, send error message (beep?)
 
     return command_signal;
