@@ -76,7 +76,7 @@ void initialize_timer22(void)
 }
 
 
-void TIM22_IRQHandler(void)
+void TIM22_Handler(void)
 {
     if (TIM22->SR & TIM_SR_CC2IF) // check if capture/compare interrupt flag is set for channel 2
     {
