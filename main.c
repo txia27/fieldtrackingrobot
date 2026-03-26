@@ -102,7 +102,9 @@ long int GetPeriod (int n)
 
 void main(void)
 {
-	//Motor_Init();
+	ADC_Init();
+
+	Motor_Init();
 	//Motor_SetPWM(500,500);
 	//waitms(2000);
 	//Motor_SetPWM(0,0);
