@@ -35,7 +35,7 @@ volatile int command_signal = 0;
 volatile int pulse_width = 0;
 volatile int signal_flag = 0; // flag to indicate a new signal has been captured
 
-const int commands[12] = {2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000};
+const int commands[12] = {1800, 2900, 4000, 5000, 6100, 7100, 8200, 9300, 10400, 11400, 12500, 13600};
 // change these numbers depending on how the encoder is configured (eg. 0.001s, 0.002s)
 // currently in microseconds
 
