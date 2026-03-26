@@ -8,7 +8,7 @@
 #include "ADC.h"
 #include "collision.h"
 #include "decoder.h"
-#include "serial.h"
+#include "Common/Include/serial.h"
 
 #define F_CPU 32000000L
 
@@ -103,17 +103,15 @@ long int GetPeriod (int n)
 char msg[64];
 void main(void)
 {
-	ADC_Init();
+	//ADC_Init();
 
-	Motor_Init();
+	//Motor_Init();
 	//Motor_SetPWM(500,500);
 	//waitms(2000);
 	//Motor_SetPWM(0,0);
 
-	//colli();
-	ADC_Init();
-    initUART(115200);
 
+	/*
     while (1)
     {
         uint16_t left   = ADC_Read_Channel(4);
@@ -127,6 +125,9 @@ void main(void)
 
         for (volatile int i = 0; i < 200000; i++);
     }
+	*/
+
+	printf("Peter Lake BBL\r\n");
 }
 
 
