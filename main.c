@@ -8,6 +8,7 @@
 #include "ADC.h"
 #include "collision.h"
 #include "decoder.h"
+#include "serial.h"
 
 #define F_CPU 32000000L
 
@@ -99,7 +100,7 @@ long int GetPeriod (int n)
 //       PB1 -|15      18|- PA8  (Measure the period at this pin)
 //       VSS -|16      17|- VDD
 //             ----------
-
+char msg[64];
 void main(void)
 {
 	ADC_Init();
@@ -109,7 +110,23 @@ void main(void)
 	//waitms(2000);
 	//Motor_SetPWM(0,0);
 
-	colli();
+	//colli();
+	ADC_Init();
+    initUART(115200);
+
+    while (1)
+    {
+        uint16_t left   = ADC_Read_Channel(4);
+        uint16_t center = ADC_Read_Channel(5);
+        uint16_t right  = ADC_Read_Channel(6);
+
+        // format string manually (no printf)
+        sprintf(msg, "L:%u C:%u R:%u\r\n", left, center, right);
+
+        eputs(msg);
+
+        for (volatile int i = 0; i < 200000; i++);
+    }
 }
 
 
