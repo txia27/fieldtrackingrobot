@@ -87,7 +87,7 @@ void PID_Init(PIDState* pid, float Kp, float Ki, float Kd){
 // IF error is negative: right > left, right signal is stronger so robot drifted right
 // IF error is positive: left > right, left signal is stronger so robot drifted left
 // IF error = 0: left = right, robot is on the line!
-float PID_Compute(PIDState* pid, uint16_t error){
+float PID_Compute(PIDState* pid, float error){
     pid->integral += error * PID_DT_S;
     float derivative = (error - pid->prev_error) / PID_DT_S;
     pid->prev_error = error;
@@ -112,6 +112,26 @@ void Motor_Drive(float base_speed, float correction){
     if(right_pwm > 0 && right_pwm < PWM_MIN) right_pwm = PWM_MIN;
     if(right_pwm < 0 && right_pwm > -PWM_MIN) right_pwm = -PWM_MIN;
 
-    Motor_SetPWM((int)left_pwm,(int)right_pwm);
+    Motor_SetPWM((int)right_pwm,(int)left_pwm);
+}
+
+void turnLeft(void){
+    Motor_SetPWM(800,400); // Turn left
+}
+
+void turnRight(void){
+    Motor_SetPWM(400, 800);  // Turn right
+}
+
+void robotForward(void){
+    Motor_SetPWM(1000,1000);
+}
+
+void robotBackward(void){
+    Motor_SetPWM(-1000,-1000);
+}
+
+void robotStop(void){
+    Motor_SetPWM(0,0);
 }
 

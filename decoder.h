@@ -1,4 +1,4 @@
-#define ERROR 150
+#define ERROR 500
 
 void initialize_decoder(void);
 void initialize_timer22(void);

@@ -2,7 +2,7 @@
 #define COLLISION_H
 
 void wait_1ms(void);
-void coll_loop(void);
+void coll_loop(unsigned short*);
 void coll_init(void);
 void waitms(int len);
 void I2C_init(void);

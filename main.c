@@ -101,56 +101,218 @@ long int GetPeriod (int n)
 //       VSS -|16      17|- VDD
 //             ----------
 
-void main(void)
+ void main(void)
 {
 	ADC_Init();
 
-	//Motor_Init();
-	//Motor_SetPWM(500,500);
-	//waitms(2000);
-	//Motor_SetPWM(0,0);
+	volatile int uart_flag = 0;
+/*
+	unsigned short range=0;
 
+	Motor_Init();
+	
 	initialize_decoder();
 	initialize_timer22();
 
+	coll_init();
+
+
 	while (1)
 	{
+		coll_loop(&range);
+		while(range>50){
+			turnRight();
+		}
+
 		if (signal_flag) // check if a new signal has been captured
 		{
-			TIM22->DIER &= ~TIM_DIER_CC2IE;
 			signal_flag = 0; // reset flag
 			//signal_length = pulse_width; // store the pulse width of the captured signal
 			int command = decode(pulse_width); // decode the signal length to determine the command
 			
-			printf("Pulse Width: %d microseconds\n", pulse_width); // print the command and pulse width for debugging
-			TIM22->DIER |= TIM_DIER_CC2IE;
+			if (command > 0) {
+			printf("Decoded Command: %d, pulse width: %d\r\n", command, pulse_width); // print the decoded command for debugging
+
+				// Execute the command (this is where you would add your motor control logic)
+				switch (command) {
+					case 1:
+						// Stop
+						robotStop();
+						printf("Stopping\r\n");
+						break;
+
+					case 2:
+						// Turn Left
+						turnLeft();
+						waitms(2000);
+						robotStop();
+						printf("Turning Left\r\n");
+						break;
+
+					case 3:
+						// Turn right
+						turnRight();
+						waitms(2000);
+						robotStop();
+						printf("Turning right\r\n");
+						break;
+
+					case 4:
+						// Move forward
+						robotForward();
+						waitms(2000);
+						robotStop();
+						printf("Moving Forward\r\n");
+						break;
+
+					case 5:
+						// Move reverse
+						robotBackward();
+						waitms(2000);
+						robotStop();
+						printf("Moving Backward\r\n");
+						break;
+
+					case 6:
+						// Turn around 180 degrees
+						printf("Turning around\r\n");
+						break;
+
+					case 7:
+						// Cycle modes/pathes
+						printf("Cycling modes\r\n");
+						break;
+
+					case 8:
+						// Start predetermined path
+						printf("Path x selected\r\n");
+						break;
+
+					case 9:
+						// Move forward-right
+						turnRight();
+						waitms(2000);
+						robotStop();
+						robotForward();
+						waitms(2000);
+						robotStop();
+						printf("Moving Forward-Right\r\n");
+						break;
+
+					case 10:
+						// Move forward-left
+						turnLeft();
+						waitms(2000);
+						robotStop();
+						robotForward();
+						waitms(2000);
+						robotStop();
+						printf("Moving Forward-Left\r\n");
+						break;
+
+					case 11:
+						// Move back-right
+						turnLeft();
+						waitms(2000);
+						robotStop();
+						robotBackward();
+						waitms(2000);
+						robotStop();
+						printf("Moving Backwards-Right\r\n");
+						break;
+
+					case 12:
+						// Move reverse
+						turnRight();
+						waitms(2000);
+						robotStop();
+						robotBackward();
+						waitms(2000);
+						robotStop();
+						printf("Moving Backwards-left\r\n");
+						break;
+						
+					default:
+						printf("robot idling\r\n");
+				}
+
+			}
+			pulse_width = 0;
 		}
 
-		waitms(200);
+		waitms(100);
 	}
 
+*/
+	Motor_Init();
+	PIDState pid;
+	PID_Init(&pid, 0.2f, 0.0f, 0.01f); // Kp = 0.1, Ki = 0, Kd = 0.0 (Tune these as we test)
 
-	/*
+	float base_speed = 600.0f; // Speed can be between 0 to 1000, tune as we test
+	uint16_t adcval;
+	uint16_t adcval2;
+	uint16_t testval = 4011;
     while (1)
     {
-        uint16_t left   = ADC_Read_Channel(4);
+        /*uint16_t left   = ADC_Read_Channel(4);
 		printf("Left: %d\r\n", left);
         uint16_t center = ADC_Read_Channel(5);
 		printf("Center: %d\r\n", center);
         uint16_t right  = ADC_Read_Channel(6);
 		printf("Right: %d\r\n", right);
 
+		
        
-        for (volatile int i = 0; i < 200000; i++);
+        for (volatile int i = 0; i < 200000; i++);*/
+
+		
+		/*if (egetc() != 0)
+		{
+			uart_flag = 1;
+		}
+
+
+		if(uart_flag){
+			uart_flag = 0;
+			Motor_SetPWM(0, 0); // stop the robot
+			
+			char buf[32];
+			float kp, ki, kd;
+
+			printf("\r\nEnter Kp: ");
+			fflush(stdout);
+			egets_echo(buf,sizeof(buf));
+			kp = atof(buf);
+
+			printf("Enter Ki: ");
+			fflush(stdout);
+			egets_echo(buf,sizeof(buf));
+			ki = atof(buf);
+
+			printf("Enter Kd: ");
+			fflush(stdout);
+			egets_echo(buf,sizeof(buf));
+			kd = atof(buf);
+
+			PID_Init(&pid, kp, ki, kd);
+			printf("PID updated! Kp=%.3f Ki=%.3f Kd=%.3f\r\n\n\n", kp, ki, kd);
+			fflush(stdout);
+		}*/
+
+		adcval = ADC_Read_Channel(4);
+		adcval2 = ADC_Read_Channel(6);
+		float error = (float)adcval - (float)adcval2 ; // Implement these variables later
+		float correction = PID_Compute(&pid, error);
+		Motor_Drive(base_speed, correction);
+
+		//printf("\x1b[2J\x1b[1;1H");
+		printf("error=%.3f correction=%.3f ", error, correction);
+		printf("leftadc=%d rithadc=%d test=%d\r", adcval, adcval2, testval);
+
+		waitms(PID_DT_MS);
     }
 		
-	
-
-	//printf("Peter Lake BBL\r\n");*/
-}
-
-
-	/*Motor_Init();
+		/*Motor_Init();
 	PIDState pid;
 	PID_Init(&pid, 0.1f, 0.0f, 0.0f); // Kp = 0.1, Ki = 0, Kd = 0.0 (Tune these as we test)
 
@@ -162,5 +324,13 @@ void main(void)
 		Motor_Drive(base_speed, correction);
 		waitms(PID_DT_MS);
 	}*/
+	
+
+	//printf("Peter Lake BBL\r\n");*/
+}
+
+
+
+	
 
 	

@@ -185,14 +185,13 @@ void coll_init(void)
 	}
 }
 
-void coll_loop(void){
+void coll_loop(unsigned short* range){
 	unsigned char success;
-	unsigned short range=0;
 
-	success = vl53l0x_read_range_single(&range);
+	success = vl53l0x_read_range_single(range);
 	if(success)
 	{
-		printf("D: %4u (mm)\r", range);    // The implementation of printf() in newlib doesn't transmit until a '\n'
+		printf("D: %4u (mm)\r", *range);    // The implementation of printf() in newlib doesn't transmit until a '\n'
 	     // is found or the buffer is full, so flush(stdout); to transmit now!!!
 	    fflush(stdout); 
 	    waitms(100);

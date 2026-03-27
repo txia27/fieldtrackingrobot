@@ -24,7 +24,12 @@ typedef struct PIDState{
 void Motor_Init(void); // Setup TIM2 for PWM and PA0-4 for motor control
 void Motor_SetPWM(int left_pwm, int right_pwm); // Writes PWM values in the TIM2 compare register
 void PID_Init(PIDState* pid, float Kp, float Ki, float Kd); // Initializes the PID struct
-float PID_Compute(PIDState* pid, uint16_t error); // Computes PID values
+float PID_Compute(PIDState* pid, float error); // Computes PID values
 void Motor_Drive(float base_speed, float correction); // High level function that contains the previous functions to drive the motors with a base speed and a correction value from the PID controller
+void turnLeft(void);
+void turnRight(void);
+void robotForward(void);
+void robotBackward(void);
+void robotStop(void);
 
 #endif
