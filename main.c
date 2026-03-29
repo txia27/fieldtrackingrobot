@@ -306,8 +306,8 @@ long int GetPeriod (int n)
 		Motor_Drive(base_speed, correction);
 
 		//printf("\x1b[2J\x1b[1;1H");
-		printf("error=%.3f correction=%.3f ", error, correction);
-		printf("leftadc=%d rithadc=%d test=%d\r", adcval, adcval2, testval);
+		//printf("error=%.3f correction=%.3f ", error, correction);
+		//printf("leftadc=%d rithadc=%d test=%d\r", adcval, adcval2, testval);
 
 		waitms(PID_DT_MS);
     }
