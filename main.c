@@ -53,9 +53,9 @@ void waitms(int len)
 //       PB1 -|15      18|- PA8  (Measure the period at this pin)
 //       VSS -|16      17|- VDD
 //             ----------
-/*int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
+int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
 	return (adccenter>adcval && adccenter>adcval2);
-}*/
+}
 
 void main(void)
 {	
@@ -71,14 +71,6 @@ void main(void)
 	int command = 0;
 	signal_flag = 0;
 /*
-	unsigned short range=0;
-
-	Motor_Init();
-	
-	initialize_decoder();
-	initialize_timer22();
-
-	coll_init();
 
 
 	while (1)
@@ -124,7 +116,6 @@ void main(void)
 					case 2:
 						// Turn Left
 						turnLeft();
-						waitms(2000);
 						robotStop();
 						printf("Turning Left\r\n");
 						break;
@@ -132,7 +123,6 @@ void main(void)
 					case 3:
 						// Turn right
 						turnRight();
-						waitms(2000);
 						robotStop();
 						printf("Turning right\r\n");
 						break;
@@ -140,7 +130,6 @@ void main(void)
 					case 4:
 						// Move forward
 						robotForward();
-						waitms(2000);
 						robotStop();
 						printf("Moving Forward\r\n");
 						break;
@@ -148,7 +137,6 @@ void main(void)
 					case 5:
 						// Move reverse
 						robotBackward();
-						waitms(2000);
 						robotStop();
 						printf("Moving Backward\r\n");
 						break;
@@ -192,10 +180,8 @@ void main(void)
 					case 9:
 						// Move forward-right
 						turnRight();
-						waitms(2000);
 						robotStop();
 						robotForward();
-						waitms(2000);
 						robotStop();
 						printf("Moving Forward-Right\r\n");
 						break;
@@ -203,10 +189,8 @@ void main(void)
 					case 10:
 						// Move forward-left
 						turnLeft();
-						waitms(2000);
 						robotStop();
 						robotForward();
-						waitms(2000);
 						robotStop();
 						printf("Moving Forward-Left\r\n");
 						break;
@@ -214,10 +198,8 @@ void main(void)
 					case 11:
 						// Move back-right
 						turnLeft();
-						waitms(2000);
 						robotStop();
 						robotBackward();
-						waitms(2000);
 						robotStop();
 						printf("Moving Backwards-Right\r\n");
 						break;
@@ -225,10 +207,8 @@ void main(void)
 					case 12:
 						// Move reverse
 						turnRight();
-						waitms(2000);
 						robotStop();
 						robotBackward();
-						waitms(2000);
 						robotStop();
 						printf("Moving Backwards-left\r\n");
 						break;
@@ -266,22 +246,19 @@ void main(void)
 		float correction = PID_Compute(&pid, error);
 		Motor_Drive(base_speed, correction);
 
-		/*if ((detect_intersection(adcval, adcval2, adccenter) == 1) && clear_intersection > 250){
+		if ((detect_intersection(adcval, adcval2, adccenter) == 1) && clear_intersection > 250){
  			node_count++;
 			clear_intersection = 0;
 			//printf("Intersection detected! Total count: %d\r\n", node_count);
 			
 			if (path[node_count] == 'F') {
 				robotForward();
-				waitms(500);
 			} else if (path[node_count] == 'L') {
 				turnLeft();
 				robotForward();
-				waitms(500);
 			} else if (path[node_count] == 'R') {
 				turnRight();
 				robotForward();
-				waitms(500);
 			}
 			else if (path[node_count] == 'S') {
 				robotStop();
@@ -295,9 +272,9 @@ void main(void)
 			else {
 
 			}
-		}*/
+		}
 
-		//clear_intersection++;
+		clear_intersection++;
 				waitms(PID_DT_MS);
     }
 		
