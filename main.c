@@ -9,6 +9,7 @@
 #include "ADC.h"
 #include "collision.h"
 #include "decoder.h"
+#include "uart.h"
 #include "Common/Include/serial.h"
 
 #define F_CPU 32000000L
@@ -52,20 +53,23 @@ void waitms(int len)
 //       PB1 -|15      18|- PA8  (Measure the period at this pin)
 //       VSS -|16      17|- VDD
 //             ----------
-int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
+/*int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
 	return (adccenter>adcval && adccenter>adcval2);
-}
+}*/
 
- void main(void)
+void main(void)
 {	
-	initialize_decoder();
-	initialize_timer22();
+	UART2_Init();
+	printf("entered main");
 
 	bool startFlag = false;
 	int node_count = -1;
 	int mode = 0;
 	int clear_intersection = 100;
 	char path[16] = "";
+	
+	int command = 0;
+	signal_flag = 0;
 /*
 	unsigned short range=0;
 
@@ -86,25 +90,25 @@ int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
 	}
 
 */
+	printf("test 1");
 	ADC_Init();
 	Motor_Init();
 	initialize_decoder();
 	initialize_timer22();
 
-	PIDState pid;
-	PID_Init(&pid, 0.2f, 0.05f, 0.05f); // Kp, Ki, Kd
-	float base_speed = 700.0f; // Speed can be between 0 to 1000, tune as we test
-	uint16_t adcval;
-	uint16_t adcval2;
-	uint16_t adccenter;
+	printf("pre loop");
 
 	while(!startFlag){
+		printf("post loop");
 
 		if (signal_flag) // check if a new signal has been captured
 		{
 			signal_flag = 0; // reset flag
 			//signal_length = pulse_width; // store the pulse width of the captured signal
-			int command = decode(pulse_width); // decode the signal length to determine the command
+			printf("pre decode");
+			command = decode(pulse_width); // decode the signal length to determine the command
+			
+			printf("%d %d   ", command, pulse_width);
 			
 			if (command > 0) {
 			//printf("Decoded Command: %d, pulse width: %d\r\n", command, pulse_width); // print the decoded command for debugging
@@ -114,7 +118,7 @@ int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
 					case 1:
 						// Stop
 						robotStop();
-						//printf("Stopping\r\n");
+						printf("Case 1\r\n");
 						break;
 
 					case 2:
@@ -122,7 +126,7 @@ int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
 						turnLeft();
 						waitms(2000);
 						robotStop();
-						//printf("Turning Left\r\n");
+						printf("Turning Left\r\n");
 						break;
 
 					case 3:
@@ -130,7 +134,7 @@ int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
 						turnRight();
 						waitms(2000);
 						robotStop();
-						//printf("Turning right\r\n");
+						printf("Turning right\r\n");
 						break;
 
 					case 4:
@@ -138,7 +142,7 @@ int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
 						robotForward();
 						waitms(2000);
 						robotStop();
-						//printf("Moving Forward\r\n");
+						printf("Moving Forward\r\n");
 						break;
 
 					case 5:
@@ -146,17 +150,17 @@ int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
 						robotBackward();
 						waitms(2000);
 						robotStop();
-						//printf("Moving Backward\r\n");
+						printf("Moving Backward\r\n");
 						break;
 
 					case 6:
 						// Turn around 180 degrees
-						//printf("Turning around\r\n");
+						printf("Turning around\r\n");
 						break;
 
 					case 7:
 						// Cycle modes/pathes
-						//printf("Cycling modes\r\n");
+						printf("Cycling modes\r\n");
 						
 						if (mode < 2) {
 							mode++;
@@ -182,7 +186,7 @@ int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
 						
 						startFlag = true;
 						
-						//printf("Path %d selected\r\n", mode);
+						printf("Path %d selected\r\n", mode);
 						break;
 
 					case 9:
@@ -193,7 +197,7 @@ int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
 						robotForward();
 						waitms(2000);
 						robotStop();
-						//printf("Moving Forward-Right\r\n");
+						printf("Moving Forward-Right\r\n");
 						break;
 
 					case 10:
@@ -204,7 +208,7 @@ int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
 						robotForward();
 						waitms(2000);
 						robotStop();
-						//printf("Moving Forward-Left\r\n");
+						printf("Moving Forward-Left\r\n");
 						break;
 
 					case 11:
@@ -215,7 +219,7 @@ int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
 						robotBackward();
 						waitms(2000);
 						robotStop();
-						//printf("Moving Backwards-Right\r\n");
+						printf("Moving Backwards-Right\r\n");
 						break;
 
 					case 12:
@@ -226,60 +230,34 @@ int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
 						robotBackward();
 						waitms(2000);
 						robotStop();
-						//printf("Moving Backwards-left\r\n");
+						printf("Moving Backwards-left\r\n");
 						break;
 						
 					default:
-						//printf("robot idling\r\n");
+						printf("robot idling\r\n");
 						robotStop();
 						break;
 				}
 
 			}
 			pulse_width = 0;
+			command = 0;
 		}
 
 		waitms(100);
 
-		if (startFlag == true) {
-			break;
-		}
 	}
 
+
+	PIDState pid;
+	PID_Init(&pid, 0.2f, 0.05f, 0.05f); // Kp, Ki, Kd
+	float base_speed = 700.0f; // Speed can be between 0 to 1000, tune as we test
+	uint16_t adcval;
+	uint16_t adcval2;
+	uint16_t adccenter;
+	
     while (1)
     {
-		/*if (egetc() != 0)
-		{
-			uart_flag = 1;
-		}
-
-
-		if(uart_flag){
-			uart_flag = 0;
-			Motor_SetPWM(0, 0); // stop the robot
-			
-			char buf[32];
-			float kp, ki, kd;
-
-			printf("\r\nEnter Kp: ");
-			fflush(stdout);
-			egets_echo(buf,sizeof(buf));
-			kp = atof(buf);
-
-			printf("Enter Ki: ");
-			fflush(stdout);
-			egets_echo(buf,sizeof(buf));
-			ki = atof(buf);
-
-			printf("Enter Kd: ");
-			fflush(stdout);
-			egets_echo(buf,sizeof(buf));
-			kd = atof(buf);
-
-			PID_Init(&pid, kp, ki, kd);
-			printf("PID updated! Kp=%.3f Ki=%.3f Kd=%.3f\r\n\n\n", kp, ki, kd);
-			fflush(stdout);
-		}*/
 
 		adcval = ADC_Read_Channel(4); 
 		adcval2 = ADC_Read_Channel(6);
@@ -288,12 +266,7 @@ int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
 		float correction = PID_Compute(&pid, error);
 		Motor_Drive(base_speed, correction);
 
-		//printf("\x1b[2J\x1b[1;1H");
-		//printf("error=%.3f correction=%.3f ", error, correction);
-		//printf("leftadc=%d rithadc=%d test=%d\r", adcval, adcval2, testval);
-
-
-		if ((detect_intersection(adcval, adcval2, adccenter) == 1) && clear_intersection > 250){
+		/*if ((detect_intersection(adcval, adcval2, adccenter) == 1) && clear_intersection > 250){
  			node_count++;
 			clear_intersection = 0;
 			//printf("Intersection detected! Total count: %d\r\n", node_count);
@@ -322,10 +295,10 @@ int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
 			else {
 
 			}
-		}
+		}*/
 
-		clear_intersection++;
-		waitms(PID_DT_MS);
+		//clear_intersection++;
+				waitms(PID_DT_MS);
     }
 		
 }

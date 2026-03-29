@@ -111,7 +111,8 @@ void TIM22_Handler(void)
 int decode (int signal_length) 
 {
     // decoder lookup table to determine which command was sent
-    if      (signal_length < commands[0] - ERROR) command_signal = 0; // default state
+    if      (signal_length > 13100 && signal_length < 13200) command_signal = 0;
+    else if (signal_length < commands[0] - ERROR) command_signal = 0; // default state
     else if (signal_length < commands[0] + ERROR) command_signal = 1; // stop moving            (0.5 - 1.5)
     else if (signal_length < commands[1] + ERROR) command_signal = 2; // turn left              (1.5 - 2.5)
     else if (signal_length < commands[2] + ERROR) command_signal = 3; // turn right             (2.5 - 3.5)

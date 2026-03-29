@@ -1,3 +1,5 @@
+#ifndef DECODER_H
+#define DECODER_H
 #define ERROR 500
 
 void initialize_decoder(void);
@@ -10,3 +12,5 @@ extern volatile int signal_flag;
 extern volatile int signal_length;
 extern volatile int signal_start;
 extern volatile int capture;
+
+#endif
