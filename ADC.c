@@ -24,7 +24,7 @@ void ADC_Init(void)
     for (volatile int i = 0; i < 1000; i++); // delay
 
     //Sampling time (VERY IMPORTANT for your circuit)
-    ADC1->SMPR |= 7;  // max sample time
+    ADC1->SMPR |= 4;  // max sample time
 
     //Enable ADC
     ADC1->CR |= ADC_CR_ADEN;
@@ -37,7 +37,7 @@ uint16_t ADC_Read_Channel(uint8_t ch)
 
     ADC1->CR |= ADC_CR_ADSTART;
 
-    uint32_t timeout = 100000;
+    uint32_t timeout = 10000;
 
     while (!(ADC1->ISR & ADC_ISR_EOC))
     {

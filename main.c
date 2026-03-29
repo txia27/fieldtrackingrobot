@@ -53,19 +53,23 @@ void waitms(int len)
 //       PB1 -|15      18|- PA8  (Measure the period at this pin)
 //       VSS -|16      17|- VDD
 //             ----------
-int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
-	return (adccenter>adcval && adccenter>adcval2);
+bool detect_intersection(uint16_t a, uint16_t b, uint16_t c){
+	if(c > a && c > b){
+		return true;
+	}
+	else{
+		return false;
+	}
 }
 
 void main(void)
 {	
 	UART2_Init();
-	printf("entered main");
 
 	bool startFlag = false;
 	int node_count = -1;
 	int mode = 0;
-	int clear_intersection = 100;
+	int clear_intersection = 250;
 	char path[16] = "";
 	
 	int command = 0;
@@ -82,25 +86,18 @@ void main(void)
 	}
 
 */
-	printf("test 1");
 	ADC_Init();
 	Motor_Init();
 	initialize_decoder();
 	initialize_timer22();
 
-	printf("pre loop");
-
 	while(!startFlag){
-		printf("post loop");
 
 		if (signal_flag) // check if a new signal has been captured
 		{
 			signal_flag = 0; // reset flag
 			//signal_length = pulse_width; // store the pulse width of the captured signal
-			printf("pre decode");
 			command = decode(pulse_width); // decode the signal length to determine the command
-			
-			printf("%d %d   ", command, pulse_width);
 			
 			if (command > 0) {
 			//printf("Decoded Command: %d, pulse width: %d\r\n", command, pulse_width); // print the decoded command for debugging
@@ -110,45 +107,45 @@ void main(void)
 					case 1:
 						// Stop
 						robotStop();
-						printf("Case 1\r\n");
+						//printf("Case 1\r\n");
 						break;
 
 					case 2:
 						// Turn Left
 						turnLeft();
 						robotStop();
-						printf("Turning Left\r\n");
+						//printf("Turning Left\r\n");
 						break;
 
 					case 3:
 						// Turn right
 						turnRight();
 						robotStop();
-						printf("Turning right\r\n");
+						//printf("Turning right\r\n");
 						break;
 
 					case 4:
 						// Move forward
 						robotForward();
 						robotStop();
-						printf("Moving Forward\r\n");
+						//printf("Moving Forward\r\n");
 						break;
 
 					case 5:
 						// Move reverse
 						robotBackward();
 						robotStop();
-						printf("Moving Backward\r\n");
+						//printf("Moving Backward\r\n");
 						break;
 
 					case 6:
 						// Turn around 180 degrees
-						printf("Turning around\r\n");
+						//printf("Turning around\r\n");
 						break;
 
 					case 7:
 						// Cycle modes/pathes
-						printf("Cycling modes\r\n");
+						//printf("Cycling modes\r\n");
 						
 						if (mode < 2) {
 							mode++;
@@ -174,7 +171,7 @@ void main(void)
 						
 						startFlag = true;
 						
-						printf("Path %d selected\r\n", mode);
+						//printf("Path %d selected\r\n", mode);
 						break;
 
 					case 9:
@@ -183,7 +180,7 @@ void main(void)
 						robotStop();
 						robotForward();
 						robotStop();
-						printf("Moving Forward-Right\r\n");
+						//printf("Moving Forward-Right\r\n");
 						break;
 
 					case 10:
@@ -192,7 +189,7 @@ void main(void)
 						robotStop();
 						robotForward();
 						robotStop();
-						printf("Moving Forward-Left\r\n");
+						//printf("Moving Forward-Left\r\n");
 						break;
 
 					case 11:
@@ -201,7 +198,7 @@ void main(void)
 						robotStop();
 						robotBackward();
 						robotStop();
-						printf("Moving Backwards-Right\r\n");
+						//printf("Moving Backwards-Right\r\n");
 						break;
 
 					case 12:
@@ -210,11 +207,11 @@ void main(void)
 						robotStop();
 						robotBackward();
 						robotStop();
-						printf("Moving Backwards-left\r\n");
+						//printf("Moving Backwards-left\r\n");
 						break;
 						
 					default:
-						printf("robot idling\r\n");
+						//printf("robot idling\r\n");
 						robotStop();
 						break;
 				}
@@ -231,10 +228,10 @@ void main(void)
 
 	PIDState pid;
 	PID_Init(&pid, 0.2f, 0.05f, 0.05f); // Kp, Ki, Kd
-	float base_speed = 700.0f; // Speed can be between 0 to 1000, tune as we test
-	uint16_t adcval;
-	uint16_t adcval2;
-	uint16_t adccenter;
+	float base_speed = 100.0f; // Speed can be between 0 to 1000, tune as we test
+	volatile uint16_t adcval;
+	volatile uint16_t adcval2;
+	volatile uint16_t adccenter;
 	
     while (1)
     {
@@ -245,23 +242,34 @@ void main(void)
 		float error = (float)adcval - (float)adcval2 ; // Implement these variables later
 		float correction = PID_Compute(&pid, error);
 		Motor_Drive(base_speed, correction);
+		//printf("%d %d\r", detect_intersection(adcval, adcval2, adccenter), clear_intersection);
+		//fflush(stdout);
+	
+		int intersectionFlag = detect_intersection(adcval, adcval2, adccenter);
 
-		if ((detect_intersection(adcval, adcval2, adccenter) == 1) && clear_intersection > 250){
+		if (intersectionFlag){
+			printf("Intersection Detected");
  			node_count++;
 			clear_intersection = 0;
 			//printf("Intersection detected! Total count: %d\r\n", node_count);
 			
 			if (path[node_count] == 'F') {
 				robotForward();
+				printf("F");
 			} else if (path[node_count] == 'L') {
+				robotStop();
 				turnLeft();
 				robotForward();
+				printf("L");
 			} else if (path[node_count] == 'R') {
+				robotStop();
 				turnRight();
 				robotForward();
+				printf("R");
 			}
 			else if (path[node_count] == 'S') {
 				robotStop();
+				printf("S");
 
 				while(1){
 					// robot finished, jut an infinite loop for now, can add something else if we want
@@ -275,7 +283,7 @@ void main(void)
 		}
 
 		clear_intersection++;
-				waitms(PID_DT_MS);
+		waitms(PID_DT_MS);
     }
 		
 }
