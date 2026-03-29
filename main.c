@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "Common/Include/stm32l051xx.h"
 #include "motor.h"
 #include "ADC.h"
@@ -11,9 +12,6 @@
 #include "Common/Include/serial.h"
 
 #define F_CPU 32000000L
-
-//=========ABSTRACT=========//
-// Measures the period of a square wave on pin PA8
 
 void delay(int dly)
 {
@@ -35,52 +33,6 @@ void waitms(int len)
 	while(len--) wait_1ms();
 }
 
-#define PIN_PERIOD (GPIOA->IDR&BIT8)
-
-// GetPeriod() seems to work fine for frequencies between 300Hz and 600kHz.
-// 'n' is used to measure the time of 'n' periods; this increases accuracy.
-long int GetPeriod (int n)
-{
-	int i;
-	unsigned int saved_TCNT1a, saved_TCNT1b;
-	
-	SysTick->LOAD = 0xffffff;  // 24-bit counter set to check for signal present
-	SysTick->VAL = 0xffffff; // load the SysTick counter
-	SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk; // Enable SysTick IRQ and SysTick Timer */
-	while (PIN_PERIOD!=0) // Wait for square wave to be 0
-	{
-		if(SysTick->CTRL & BIT16) return 0;
-	}
-	SysTick->CTRL = 0x00; // Disable Systick counter
-
-	SysTick->LOAD = 0xffffff;  // 24-bit counter set to check for signal present
-	SysTick->VAL = 0xffffff; // load the SysTick counter
-	SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk; // Enable SysTick IRQ and SysTick Timer */
-	while (PIN_PERIOD==0) // Wait for square wave to be 1
-	{
-		if(SysTick->CTRL & BIT16) return 0;
-	}
-	SysTick->CTRL = 0x00; // Disable Systick counter
-	
-	SysTick->LOAD = 0xffffff;  // 24-bit counter reset
-	SysTick->VAL = 0xffffff; // load the SysTick counter to initial value
-	SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk; // Enable SysTick IRQ and SysTick Timer */
-	for(i=0; i<n; i++) // Measure the time of 'n' periods
-	{
-		while (PIN_PERIOD!=0) // Wait for square wave to be 0
-		{
-			if(SysTick->CTRL & BIT16) return 0;
-		}
-		while (PIN_PERIOD==0) // Wait for square wave to be 1
-		{
-			if(SysTick->CTRL & BIT16) return 0;
-		}
-	}
-	SysTick->CTRL = 0x00; // Disable Systick counter
-
-	return 0xffffff-SysTick->VAL;
-}
-
 // LQFP32 pinout
 //             ----------
 //       VDD -|1       32|- VSS
@@ -100,12 +52,20 @@ long int GetPeriod (int n)
 //       PB1 -|15      18|- PA8  (Measure the period at this pin)
 //       VSS -|16      17|- VDD
 //             ----------
+int detect_intersection(uint16_t adcval, uint16_t adcval2, uint16_t adccenter){
+	return (adccenter>adcval && adccenter>adcval2);
+}
 
  void main(void)
-{
-	ADC_Init();
+{	
+	initialize_decoder();
+	initialize_timer22();
 
-	volatile int uart_flag = 0;
+	bool startFlag = false;
+	int node_count = -1;
+	int mode = 0;
+	int clear_intersection = 100;
+	char path[16] = "";
 /*
 	unsigned short range=0;
 
@@ -121,8 +81,24 @@ long int GetPeriod (int n)
 	{
 		coll_loop(&range);
 		while(range>50){
-			turnRight();
+			turnRight();		// not too sure what this block does, is it collision detection??? - Charles
 		}
+	}
+
+*/
+	ADC_Init();
+	Motor_Init();
+	initialize_decoder();
+	initialize_timer22();
+
+	PIDState pid;
+	PID_Init(&pid, 0.2f, 0.05f, 0.05f); // Kp, Ki, Kd
+	float base_speed = 700.0f; // Speed can be between 0 to 1000, tune as we test
+	uint16_t adcval;
+	uint16_t adcval2;
+	uint16_t adccenter;
+
+	while(!startFlag){
 
 		if (signal_flag) // check if a new signal has been captured
 		{
@@ -131,14 +107,14 @@ long int GetPeriod (int n)
 			int command = decode(pulse_width); // decode the signal length to determine the command
 			
 			if (command > 0) {
-			printf("Decoded Command: %d, pulse width: %d\r\n", command, pulse_width); // print the decoded command for debugging
+			//printf("Decoded Command: %d, pulse width: %d\r\n", command, pulse_width); // print the decoded command for debugging
 
 				// Execute the command (this is where you would add your motor control logic)
 				switch (command) {
 					case 1:
 						// Stop
 						robotStop();
-						printf("Stopping\r\n");
+						//printf("Stopping\r\n");
 						break;
 
 					case 2:
@@ -146,7 +122,7 @@ long int GetPeriod (int n)
 						turnLeft();
 						waitms(2000);
 						robotStop();
-						printf("Turning Left\r\n");
+						//printf("Turning Left\r\n");
 						break;
 
 					case 3:
@@ -154,7 +130,7 @@ long int GetPeriod (int n)
 						turnRight();
 						waitms(2000);
 						robotStop();
-						printf("Turning right\r\n");
+						//printf("Turning right\r\n");
 						break;
 
 					case 4:
@@ -162,7 +138,7 @@ long int GetPeriod (int n)
 						robotForward();
 						waitms(2000);
 						robotStop();
-						printf("Moving Forward\r\n");
+						//printf("Moving Forward\r\n");
 						break;
 
 					case 5:
@@ -170,22 +146,43 @@ long int GetPeriod (int n)
 						robotBackward();
 						waitms(2000);
 						robotStop();
-						printf("Moving Backward\r\n");
+						//printf("Moving Backward\r\n");
 						break;
 
 					case 6:
 						// Turn around 180 degrees
-						printf("Turning around\r\n");
+						//printf("Turning around\r\n");
 						break;
 
 					case 7:
 						// Cycle modes/pathes
-						printf("Cycling modes\r\n");
+						//printf("Cycling modes\r\n");
+						
+						if (mode < 2) {
+							mode++;
+						} 
+						else {
+							mode = 0;
+						}
+
 						break;
 
 					case 8:
 						// Start predetermined path
-						printf("Path x selected\r\n");
+
+						if (mode == 0) {
+							strcpy (path, "FLLFRLRS");
+						}
+						else if (mode == 1) {
+							strcpy (path, "LRLRFFS");
+						}
+						else {
+							strcpy(path, "RFRLRLFS");
+						}
+						
+						startFlag = true;
+						
+						//printf("Path %d selected\r\n", mode);
 						break;
 
 					case 9:
@@ -196,7 +193,7 @@ long int GetPeriod (int n)
 						robotForward();
 						waitms(2000);
 						robotStop();
-						printf("Moving Forward-Right\r\n");
+						//printf("Moving Forward-Right\r\n");
 						break;
 
 					case 10:
@@ -207,7 +204,7 @@ long int GetPeriod (int n)
 						robotForward();
 						waitms(2000);
 						robotStop();
-						printf("Moving Forward-Left\r\n");
+						//printf("Moving Forward-Left\r\n");
 						break;
 
 					case 11:
@@ -218,7 +215,7 @@ long int GetPeriod (int n)
 						robotBackward();
 						waitms(2000);
 						robotStop();
-						printf("Moving Backwards-Right\r\n");
+						//printf("Moving Backwards-Right\r\n");
 						break;
 
 					case 12:
@@ -229,11 +226,13 @@ long int GetPeriod (int n)
 						robotBackward();
 						waitms(2000);
 						robotStop();
-						printf("Moving Backwards-left\r\n");
+						//printf("Moving Backwards-left\r\n");
 						break;
 						
 					default:
-						printf("robot idling\r\n");
+						//printf("robot idling\r\n");
+						robotStop();
+						break;
 				}
 
 			}
@@ -241,31 +240,14 @@ long int GetPeriod (int n)
 		}
 
 		waitms(100);
+
+		if (startFlag == true) {
+			break;
+		}
 	}
 
-*/
-	Motor_Init();
-	PIDState pid;
-	PID_Init(&pid, 0.2f, 0.0f, 0.01f); // Kp = 0.1, Ki = 0, Kd = 0.0 (Tune these as we test)
-
-	float base_speed = 600.0f; // Speed can be between 0 to 1000, tune as we test
-	uint16_t adcval;
-	uint16_t adcval2;
-	uint16_t testval = 4011;
     while (1)
     {
-        /*uint16_t left   = ADC_Read_Channel(4);
-		printf("Left: %d\r\n", left);
-        uint16_t center = ADC_Read_Channel(5);
-		printf("Center: %d\r\n", center);
-        uint16_t right  = ADC_Read_Channel(6);
-		printf("Right: %d\r\n", right);
-
-		
-       
-        for (volatile int i = 0; i < 200000; i++);*/
-
-		
 		/*if (egetc() != 0)
 		{
 			uart_flag = 1;
@@ -299,8 +281,9 @@ long int GetPeriod (int n)
 			fflush(stdout);
 		}*/
 
-		adcval = ADC_Read_Channel(4);
+		adcval = ADC_Read_Channel(4); 
 		adcval2 = ADC_Read_Channel(6);
+		adccenter = ADC_Read_Channel(5);
 		float error = (float)adcval - (float)adcval2 ; // Implement these variables later
 		float correction = PID_Compute(&pid, error);
 		Motor_Drive(base_speed, correction);
@@ -309,24 +292,42 @@ long int GetPeriod (int n)
 		//printf("error=%.3f correction=%.3f ", error, correction);
 		//printf("leftadc=%d rithadc=%d test=%d\r", adcval, adcval2, testval);
 
+
+		if ((detect_intersection(adcval, adcval2, adccenter) == 1) && clear_intersection > 250){
+ 			node_count++;
+			clear_intersection = 0;
+			//printf("Intersection detected! Total count: %d\r\n", node_count);
+			
+			if (path[node_count] == 'F') {
+				robotForward();
+				waitms(500);
+			} else if (path[node_count] == 'L') {
+				turnLeft();
+				robotForward();
+				waitms(500);
+			} else if (path[node_count] == 'R') {
+				turnRight();
+				robotForward();
+				waitms(500);
+			}
+			else if (path[node_count] == 'S') {
+				robotStop();
+
+				while(1){
+					// robot finished, jut an infinite loop for now, can add something else if we want
+				}
+
+				// play ending song???
+			}
+			else {
+
+			}
+		}
+
+		clear_intersection++;
 		waitms(PID_DT_MS);
     }
 		
-		/*Motor_Init();
-	PIDState pid;
-	PID_Init(&pid, 0.1f, 0.0f, 0.0f); // Kp = 0.1, Ki = 0, Kd = 0.0 (Tune these as we test)
-
-	float base_speed = 600.0f; // Speed can be between 0 to 1000, tune as we test
-
-	while(1){
-		uint16_t error = ADC_Read_Channel(4) - ADC_Read_Channel(6); // Implement these variables later
-		float correction = PID_Compute(&pid, error);
-		Motor_Drive(base_speed, correction);
-		waitms(PID_DT_MS);
-	}*/
-	
-
-	//printf("Peter Lake BBL\r\n");*/
 }
 
 
