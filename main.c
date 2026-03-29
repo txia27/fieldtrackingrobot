@@ -91,7 +91,7 @@ void main(void)
 	initialize_decoder();
 	initialize_timer22();
 
-	while(!startFlag){
+	/*while(!startFlag){
 
 		if (signal_flag) // check if a new signal has been captured
 		{
@@ -171,7 +171,7 @@ void main(void)
 						
 						startFlag = true;
 						
-						//printf("Path %d selected\r\n", mode);
+						printf("Path %d selected\r\n", mode);
 						break;
 
 					case 9:
@@ -223,32 +223,32 @@ void main(void)
 
 		waitms(100);
 
-	}
+	}*/
 
 
 	PIDState pid;
 	PID_Init(&pid, 0.2f, 0.05f, 0.05f); // Kp, Ki, Kd
-	float base_speed = 100.0f; // Speed can be between 0 to 1000, tune as we test
-	volatile uint16_t adcval;
-	volatile uint16_t adcval2;
-	volatile uint16_t adccenter;
+	float base_speed = 400.0f; // Speed can be between 0 to 1000, tune as we test
+	uint16_t adcval;
+	uint16_t adcval2;
+	uint16_t adccenter;
 	
     while (1)
     {
 
-		adcval = ADC_Read_Channel(4); 
-		adcval2 = ADC_Read_Channel(6);
-		adccenter = ADC_Read_Channel(5);
+		//adcval = ADC_Read_Channel(4); 
+		//adcval2 = ADC_Read_Channel(6);
+		//adccenter = ADC_Read_Channel(5);
+		ADC_Read_All(&adcval, &adccenter, &adcval2);
 		float error = (float)adcval - (float)adcval2 ; // Implement these variables later
 		float correction = PID_Compute(&pid, error);
 		Motor_Drive(base_speed, correction);
-		//printf("%d %d\r", detect_intersection(adcval, adcval2, adccenter), clear_intersection);
-		//fflush(stdout);
-	
-		int intersectionFlag = detect_intersection(adcval, adcval2, adccenter);
+		printf("ADC Values: %d %d %d | %d\r", adcval, adcval2, adccenter, 
+        detect_intersection(adcval, adcval2, adccenter));
+		fflush(stdout);
 
-		if (intersectionFlag){
-			printf("Intersection Detected");
+		if ((detect_intersection(adcval, adcval2, adccenter)) && clear_intersection > 250) {
+			printf("Intersection Detected\n");
  			node_count++;
 			clear_intersection = 0;
 			//printf("Intersection detected! Total count: %d\r\n", node_count);
