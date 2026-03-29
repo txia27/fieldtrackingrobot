@@ -30,7 +30,7 @@ void ADC_Init(void)
     ADC1->CR |= ADC_CR_ADEN;
     while (!(ADC1->ISR & ADC_ISR_ADRDY));
 }
-
+/*
 uint16_t ADC_Read_Channel(uint8_t ch)
 {
     ADC1->CHSELR = (1 << ch);
@@ -48,4 +48,18 @@ uint16_t ADC_Read_Channel(uint8_t ch)
     }
 
     return ADC1->DR;
+}
+*/
+void ADC_Read_All(uint16_t *ch4, uint16_t *ch5, uint16_t *ch6){
+    ADC1->CHSELR = (1<<4)|(1<<5)|(1<<6);
+    ADC1->CR |= ADC_CR_ADSTART;
+
+    while(!(ADC1->ISR & ADC_ISR_EOC));
+    *ch4 = ADC1->DR;
+    
+    while(!(ADC1->ISR & ADC_ISR_EOC));
+    *ch5 = ADC1->DR;
+
+    while(!(ADC1->ISR & ADC_ISR_EOC));
+    *ch6 = ADC1->DR;
 }
