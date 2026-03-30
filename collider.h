@@ -12,5 +12,8 @@ extern uint16_t packet;
 
 void I2C_Send_2byte(uint8_t address, uint16_t data);
 void I2C_init (void);
+void check_success_vl53(void);
+void poll_vl53_I2C(void);
+
 
 #endif

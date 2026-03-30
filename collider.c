@@ -1,5 +1,12 @@
 #include "collider.h"
 #include "../Common/Include/stm32l051xx.h"
+#include "../Common/Include/serial.h"
+#include "stdio.h"
+#include "vl53l0x.h"
+
+unsigned char success;
+unsigned short range;
+uint16_t packet;
 
 void I2C_init (void)
 {
@@ -35,4 +42,36 @@ void I2C_Send_2byte(uint8_t address, uint16_t data)
 
     while(!(I2C1->ISR & I2C_ISR_TC));
     I2C1->CR2 |= I2C_CR2_STOP;
+}
+
+void check_success_vl53(void){
+	success = vl53l0x_init();
+	if(success)
+	{
+		printf("VL53L0x initialization succeeded.\r\n");
+		fflush(stdout);
+	}
+	else
+	{
+		printf("VL53L0x initialization failed.\r\n");
+		fflush(stdout);
+	}
+}
+
+//Sends packets of vl53 to slave device. Packet format: 0x1 (12 bits of range data)
+void poll_vl53_I2C(void){
+	
+	success = vl53l0x_read_range_single(&range);
+		if(success)
+		{
+			printf("D: %4u (mm)   \r\n", range);
+	        
+	        // The implementation of printf() in newlib doesn't transmit until a '\n'
+	        // is found or the buffer is full, so flush(stdout); to transmit now!!!
+	        fflush(stdout); 
+
+			uint16_t packet = (0x1 << 12) | (range & 0x0FFF);
+			I2C_Send_2byte(SLAVE_ADDRESS, packet);
+		}
+
 }

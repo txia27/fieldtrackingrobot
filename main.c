@@ -86,27 +86,35 @@ void main(void)
 	initialize_decoder();
 	initialize_timer22();
 	ir_tx_init();
-
-	while (1)
+	I2C_init();
+	check_success_vl53();
+	printf("Done Iniitliazation\r\n");
+	fflush(stdout);
+	
+	/*while (1)
 {
 for (int i = 0; i < 3; i++)
 {
 ir_tx_send(1400);
 }
 waitms(1000);
-}
+}*/	
+	printf("finished sending\r\n");
+	fflush(stdout);
 
 	while(1) {
-
+		printf("Entered main loop\r\n");
+		fflush(stdout);
 		ms = 0;
 		last_time_press1 = 0;
 		last_time_press2 = 0;
 		node_count = -1;
 		clear_intersection = 250;
 
+		poll_vl53_I2C(); //only polls once no while loops within this function, so it won't block the rest of the code from running. It will update the global variable "range" with the latest distance measurement from the VL53L0X sensor.
+		waitms(100);
 		while(!startFlag){
-
-			if (signal_flag) // check if a new signal has been captured
+			
 			{
 				signal_flag = 0; // reset flag
 				//signal_length = pulse_width; // store the pulse width of the captured signal
@@ -279,7 +287,7 @@ waitms(1000);
 
 		while (startFlag)
 		{
-
+			
 			//adcval = ADC_Read_Channel(4); 
 			//adcval2 = ADC_Read_Channel(6);
 			//adccenter = ADC_Read_Channel(5);
