@@ -10,44 +10,42 @@ static void delay_us(uint16_t us)
 
 void ir_tx_init(void)
 {
-    // Enable GPIOA + TIM1
+    // Enable GPIOA + TIM21
     RCC->IOPENR |= RCC_IOPENR_GPIOAEN;
-    RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
+    RCC->APB2ENR |= RCC_APB2ENR_TIM21EN;
 
-    // PA8 → AF2 (TIM1_CH1)
-    GPIOA->MODER &= ~(3 << (8 * 2));
-    GPIOA->MODER |=  (2 << (8 * 2));   // AF mode
+    // --- PA15 → AF mode ---
+    GPIOA->MODER &= ~(3 << (15 * 2));
+    GPIOA->MODER |=  (2 << (15 * 2));   // AF mode
 
-    GPIOA->AFR[1] &= ~(0xF << ((8 - 8) * 4));
-    GPIOA->AFR[1] |=  (2 << ((8 - 8) * 4));  // AF2
+    // AF0 = TIM21_CH1 (on L0)
+    GPIOA->AFR[1] &= ~(0xF << ((15 - 8) * 4));
+    GPIOA->AFR[1] |=  (0 << ((15 - 8) * 4));
 
-    // --- TIM1 setup ---
-    TIM1->PSC = 0;
-    TIM1->ARR = (F_CPU / PWM_FREQ) - 1;
-    TIM1->CCR1 = TIM1->ARR / 2;
+    // --- Timer setup ---
+    TIM21->PSC = 0;
+    TIM21->ARR = (32000000L / PWM_FREQ) - 1;
+    TIM21->CCR1 = TIM21->ARR / 2;
 
     // PWM mode 1
-    TIM1->CCMR1 &= ~(7 << 4);
-    TIM1->CCMR1 |=  (6 << 4);
-
-    // Enable main output (IMPORTANT for TIM1)
-    TIM1->BDTR |= TIM_BDTR_MOE;
+    TIM21->CCMR1 &= ~(7 << 4);
+    TIM21->CCMR1 |=  (6 << 4);
 
     // Start OFF
-    TIM1->CCER &= ~TIM_CCER_CC1E;
+    TIM21->CCER &= ~TIM_CCER_CC1E;
 
     // Enable timer
-    TIM1->CR1 |= TIM_CR1_CEN;
+    TIM21->CR1 |= TIM_CR1_CEN;
 }
 
 static inline void IR_on(void)
 {
-    TIM1->CCER |= TIM_CCER_CC1E;
+    TIM21->CCER |= TIM_CCER_CC1E;
 }
 
 static inline void IR_off(void)
 {
-    TIM1->CCER &= ~TIM_CCER_CC1E;
+    TIM21->CCER &= ~TIM_CCER_CC1E;
 }
 
 void ir_tx_send(uint16_t pulse_us)
