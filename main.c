@@ -70,7 +70,7 @@ void main(void)
 	int node_count = -1;
 	int mode = 0;
 	int clear_intersection = 250;
-	int path[5] = {1,2,1,2,3};
+	int path[8];
 	
 	int command = 0;
 	signal_flag = 0;
@@ -96,6 +96,12 @@ void main(void)
 	initialize_timer22();
 
 	while(1) {
+
+		ms = 0;
+		last_time_press1 = 0;
+		last_time_press2 = 0;
+		node_count = -1;
+		clear_intersection = 250;
 
 		while(!startFlag){
 
@@ -180,13 +186,19 @@ void main(void)
 							// Start predetermined path
 
 							if (mode == 0) {
-								strcpy (path, "FLLFRLRS");
+								int buffer [8] = {0,1,1,0,2,1,2,3};
+								size_t size = sizeof(buffer);
+								memcpy(path, buffer, size);
 							}
 							else if (mode == 1) {
-								strcpy (path, "LRLRFFS");
+								int buffer[8] = {1,2,1,2,0,0,3,3};
+								size_t size = sizeof(buffer);
+								memcpy(path,buffer,size);
 							}
 							else {
-								strcpy(path, "RFRLRLFS");
+								int buffer[8] = {2,0,2,1,2,1,0,3};
+								size_t size = sizeof(buffer);
+								memcpy(path,buffer,size);
 							}
 							
 							startFlag = true;
@@ -257,7 +269,7 @@ void main(void)
 
 		PIDState pid;
 		PID_Init(&pid, 0.2f, 0.05f, 0.05f); // Kp, Ki, Kd
-		float base_speed = 500.0f; // Speed can be between 0 to 1000, tune as we test
+		float base_speed = 600.0f; // Speed can be between 0 to 1000, tune as we test
 		uint16_t adcval;
 		uint16_t adcval2;
 		uint16_t adccenter;
@@ -310,7 +322,10 @@ void main(void)
 				waitms(100);
 
 				robotSpin();
-				waitms(2000);
+				waitms(1000);
+
+				robotForward();
+				waitms(1500);
 			}
 
 			if ((detect_intersection(adcval, adcval2, adccenter)) && (clear_intersection > 500) && (adccenter > 100)) {
@@ -328,14 +343,14 @@ void main(void)
 					robotStop();
 					waitms(2000);
 					turnLeft();
-					waitms(2200);
+					waitms(700);
 					robotForward();
 				} else if (path[node_count] == 2) {
 					printf("R\n");
 					robotStop();
 					waitms(2000);
 					turnRight();
-					waitms(2200);
+					waitms(700);
 					robotForward();
 				}
 				else if (path[node_count] == 3) {
