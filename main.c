@@ -250,6 +250,15 @@ void main(void)
         detect_intersection(adcval, adcval2, adccenter));
 		fflush(stdout);
 
+		// Auto Recovery Mode
+		if(adcval < 100 && adcval2 < 100 && adccenter < 100){
+			robotStop();
+			waitms(100);
+
+			robotSpin();
+			waitms(2000);
+		}
+
 		if ((detect_intersection(adcval, adcval2, adccenter)) && (clear_intersection > 500) && (adccenter > 100)) {
 			printf("Intersection Detected\n");
 
