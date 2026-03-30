@@ -78,18 +78,7 @@ void main(void)
 	unsigned long ms = 0;
 	unsigned long last_time_press1 = 0;
 	unsigned long last_time_press2 = 0;
-/*
 
-
-	while (1)
-	{
-		coll_loop(&range);
-		while(range>50){
-			turnRight();		// not too sure what this block does, is it collision detection??? - Charles
-		}
-	}
-
-*/
 	ADC_Init();
 	Motor_Init();
 	initialize_decoder();
@@ -203,7 +192,7 @@ void main(void)
 							
 							startFlag = true;
 							
-							printf("Path %d selected\r\n", mode);
+							//printf("Path %d selected\r\n", mode);
 							break;
 
 						case 9:
@@ -273,7 +262,9 @@ void main(void)
 		uint16_t adcval;
 		uint16_t adcval2;
 		uint16_t adccenter;
-		
+		int poll_count = 0;
+		unsigned char poll_req[] = {0xAE, 0xC1, 0x20, 0x02, 0x01, 0x01};
+
 		while (startFlag)
 		{
 
@@ -284,9 +275,14 @@ void main(void)
 			float error = (float)adcval - (float)adcval2 ; // Implement these variables later
 			float correction = PID_Compute(&pid, error);
 			Motor_Drive(base_speed, correction);
-			printf("ADC Values: %d %d %d | %d\r", adcval, adcval2, adccenter, 
-			detect_intersection(adcval, adcval2, adccenter));
-			fflush(stdout);
+			//printf("ADC Values: %d %d %d | %d\r", adcval, adcval2, adccenter,
+			//detect_intersection(adcval, adcval2, adccenter));
+			//fflush(stdout);
+
+			if(poll_count++ >= 5) {
+				poll_count = 0;
+				WriteCom(6, poll_req);
+			}
 
 			if (signal_flag) // check if a new signal has been captured
 			{
@@ -329,24 +325,24 @@ void main(void)
 			}
 
 			if ((detect_intersection(adcval, adcval2, adccenter)) && (clear_intersection > 500) && (adccenter > 100)) {
-				printf("Intersection Detected\n");
+				//printf("Intersection Detected\n");
 
 				node_count++;
 				clear_intersection = 0;
 				//printf("Intersection detected! Total count: %d\r\n", node_count);
 				
 				if (path[node_count] == 0) {
-					printf("F\n");
+					//printf("F\n");
 					robotForward();
 				} else if (path[node_count] == 1) {
-					printf("L\n");
+					//printf("L\n");
 					robotStop();
 					waitms(2000);
 					turnLeft();
 					waitms(700);
 					robotForward();
 				} else if (path[node_count] == 2) {
-					printf("R\n");
+					//printf("R\n");
 					robotStop();
 					waitms(2000);
 					turnRight();
@@ -355,14 +351,14 @@ void main(void)
 				}
 				else if (path[node_count] == 3) {
 					robotStop();
-					printf("S");
+					//printf("S");
 
 					startFlag = false;
 
 					// play ending song???
 				}
 				else {
-					printf("else\n");
+					//printf("else\n");
 				}
 			}
 
