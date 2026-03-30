@@ -31,5 +31,6 @@ void turnRight(void);
 void robotForward(void);
 void robotBackward(void);
 void robotStop(void);
+void robotSpin(void);
 
 #endif

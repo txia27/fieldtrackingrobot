@@ -97,7 +97,7 @@ void main(void)
 
 	while(1) {
 
-		/*while(!startFlag){
+		while(!startFlag){
 
 			if (signal_flag) // check if a new signal has been captured
 			{
@@ -251,7 +251,7 @@ void main(void)
 			ms += 100;
 			waitms(100);
 
-		}*/
+		}
 
 
 
@@ -302,6 +302,15 @@ void main(void)
 				}
 				pulse_width = 0;
 				command = 0;
+			}
+
+			//Auto Recovery Mode
+			if(adcval < 100 && adcval2 < 100 && adccenter < 100){
+				robotStop();
+				waitms(100);
+
+				robotSpin();
+				waitms(2000);
 			}
 
 			if ((detect_intersection(adcval, adcval2, adccenter)) && (clear_intersection > 500) && (adccenter > 100)) {
