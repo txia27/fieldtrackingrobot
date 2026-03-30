@@ -114,7 +114,7 @@ waitms(1000);
 		poll_vl53_I2C(); //only polls once no while loops within this function, so it won't block the rest of the code from running. It will update the global variable "range" with the latest distance measurement from the VL53L0X sensor.
 		waitms(100);
 		while(!startFlag){
-			
+			if(signal_flag)
 			{
 				signal_flag = 0; // reset flag
 				//signal_length = pulse_width; // store the pulse width of the captured signal
