@@ -45,8 +45,8 @@ uart.o: uart.c uart.h
 vl53l0x.o: vl53l0x.c vl53l0x.h
 	$(CC) -c $(CCFLAGS) vl53l0x.c -o vl53l0x.o
 
-newlib_stubs.o: ../Common/Source/newlib_stubs.c
-	$(CC) -c $(CCFLAGS) ../Common/Source/newlib_stubs.c -o newlib_stubs.o
+newlib_stubs.o: Common/Source/newlib_stubs.c
+	$(CC) -c $(CCFLAGS) Common/Source/newlib_stubs.c -o newlib_stubs.o
 
 clean: 
 	@del $(OBJS) 2>NUL
