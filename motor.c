@@ -116,11 +116,11 @@ void Motor_Drive(float base_speed, float correction){
 }
 
 void turnLeft(void){
-    Motor_SetPWM(800,400); // Turn left
+    Motor_SetPWM(-600,800); // Turn left
 }
 
 void turnRight(void){
-    Motor_SetPWM(400, 800);  // Turn right
+    Motor_SetPWM(800, -600);  // Turn right
 }
 
 void robotForward(void){

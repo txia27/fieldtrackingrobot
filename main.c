@@ -70,7 +70,7 @@ void main(void)
 	int node_count = -1;
 	int mode = 0;
 	int clear_intersection = 250;
-	char path[16] = "";
+	int path[5] = {1,2,1,2,3};
 	
 	int command = 0;
 	signal_flag = 0;
@@ -140,6 +140,8 @@ void main(void)
 
 					case 6:
 						// Turn around 180 degrees
+						turnRight();
+						waitms(4400);
 						//printf("Turning around\r\n");
 						break;
 
@@ -226,9 +228,10 @@ void main(void)
 	}*/
 
 
+
 	PIDState pid;
 	PID_Init(&pid, 0.2f, 0.05f, 0.05f); // Kp, Ki, Kd
-	float base_speed = 400.0f; // Speed can be between 0 to 1000, tune as we test
+	float base_speed = 500.0f; // Speed can be between 0 to 1000, tune as we test
 	uint16_t adcval;
 	uint16_t adcval2;
 	uint16_t adccenter;
@@ -247,27 +250,32 @@ void main(void)
         detect_intersection(adcval, adcval2, adccenter));
 		fflush(stdout);
 
-		if ((detect_intersection(adcval, adcval2, adccenter)) && clear_intersection > 250) {
+		if ((detect_intersection(adcval, adcval2, adccenter)) && (clear_intersection > 500) && (adccenter > 100)) {
 			printf("Intersection Detected\n");
+
  			node_count++;
 			clear_intersection = 0;
 			//printf("Intersection detected! Total count: %d\r\n", node_count);
 			
-			if (path[node_count] == 'F') {
+			if (path[node_count] == 0) {
+				printf("F\n");
 				robotForward();
-				printf("F");
-			} else if (path[node_count] == 'L') {
+			} else if (path[node_count] == 1) {
+				printf("L\n");
 				robotStop();
+				waitms(2000);
 				turnLeft();
+				waitms(2200);
 				robotForward();
-				printf("L");
-			} else if (path[node_count] == 'R') {
+			} else if (path[node_count] == 2) {
+				printf("R\n");
 				robotStop();
+				waitms(2000);
 				turnRight();
+				waitms(2200);
 				robotForward();
-				printf("R");
 			}
-			else if (path[node_count] == 'S') {
+			else if (path[node_count] == 3) {
 				robotStop();
 				printf("S");
 
@@ -278,7 +286,7 @@ void main(void)
 				// play ending song???
 			}
 			else {
-
+				printf("else\n");
 			}
 		}
 
