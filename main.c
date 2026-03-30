@@ -10,6 +10,8 @@
 #include "collision.h"
 #include "decoder.h"
 #include "uart.h"
+#include "robot_ir_tx.h"
+#include "collider.h"
 #include "Common/Include/serial.h"
 
 #define F_CPU 32000000L
@@ -83,6 +85,16 @@ void main(void)
 	Motor_Init();
 	initialize_decoder();
 	initialize_timer22();
+	ir_tx_init();
+
+	while (1)
+{
+for (int i = 0; i < 3; i++)
+{
+ir_tx_send(1400);
+}
+waitms(1000);
+}
 
 	while(1) {
 

@@ -29,26 +29,6 @@
 extern void wait_1ms(void);
 extern void waitms(int len);
 
-void I2C_init (void)
-{
-	RCC->IOPENR  |= BIT1;// peripheral clock enable for port B (I2C pins are in port B)
-	RCC->APB1ENR  |= BIT21; // peripheral clock enable for I2C1 (page 177 of RM0451 Reference manual)
-	
-	//Configure PB6 for I2C1_SCL, pin 29 in LQFP32 package (page 44 of datasheet en.DM00108219.pdf)
-	GPIOB->MODER = (GPIOB->MODER & ~(BIT12|BIT13)) | BIT13; // PB6 AF-Mode (page 200 of RM0451 Reference manual)
-	GPIOB->AFR[0] |= BIT24; // AF1 selected (page 204 of RM0451 Reference manual)
-	
-	//Configure PB7 for I2C1_SDA, pin 30 in LQFP32 package (page 44 of datasheet en.DM00108219.pdf)
-	GPIOB->MODER = (GPIOB->MODER & ~(BIT14|BIT15)) | BIT15; // PB7 AF-Mode (page 200 of RM0451 Reference manual)
-	GPIOB->AFR[0] |= BIT28; // AF1 selected (page 204 of RM0451 Reference manual)
-	
-	GPIOB->OTYPER   |= BIT6 | BIT7; // I2C pins (PB6 and PB7)  must be open drain
-	GPIOB->OSPEEDR  |= BIT12 | BIT14; // Medium speed for PB6 and PB7
-
-	// This configures the I2C clock (Check page 564 of RM0451).  SCLK must be 100kHz or less.
-	I2C1->TIMINGR = (uint32_t)0x70420f13;
-}
-
 unsigned char i2c_read_addr8_data8(unsigned char address, unsigned char * value)
 {
 	
@@ -157,32 +137,6 @@ void validate_I2C_interface (void)
     printf("Reg(0x61): 0x%04x\r\n", val16);
     
     printf("\r\n");
-}
-
-void coll_init(void)
-{
-	unsigned char success;
-	
-	waitms(500);
-	printf("\x1b[2J\x1b[1;1H"); // Clear screen using ANSI escape sequence.
-	printf ("STM32L051 I2C vl53l0x test program\r\n"
-	        "File: %s\r\n"
-	        "Compiled: %s, %s\r\n",
-	        __FILE__, __DATE__, __TIME__);
-
-	I2C_init();
-
-    validate_I2C_interface();
-
-	success = vl53l0x_init();
-	if(success)
-	{
-		printf("VL53L0x initialization succeeded.\r\n");
-	}
-	else
-	{
-		printf("VL53L0x initialization failed.\r\n");
-	}
 }
 
 void coll_loop(unsigned short* range){

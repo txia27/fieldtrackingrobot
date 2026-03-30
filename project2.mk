@@ -10,7 +10,7 @@ LIBPATH1=$(subst \libgcc.a,,$(shell dir /s /b "$(GCCPATH)*libgcc.a" | find "v6-m
 LIBPATH2=$(subst \libc_nano.a,,$(shell dir /s /b "$(GCCPATH)*libc_nano.a" | find "v6-m"))
 LIBSPEC=-L"$(LIBPATH1)" -L"$(LIBPATH2)"
 
-OBJS=main.o startup.o serial.o newlib_stubs.o collision.o motor.o ADC.o decoder.o uart.o vl53l0x.o
+OBJS=main.o startup.o serial.o newlib_stubs.o collision.o motor.o ADC.o decoder.o uart.o vl53l0x.o robot_ir_tx.o collider.o
 
 # Notice that floating point is enabled with printf (-u _printf_float)
 main.hex: $(OBJS)
@@ -44,6 +44,12 @@ uart.o: uart.c uart.h
 
 vl53l0x.o: vl53l0x.c vl53l0x.h
 	$(CC) -c $(CCFLAGS) vl53l0x.c -o vl53l0x.o
+
+robot_ir_tx.o: robot_ir_tx.c robot_ir_tx.h
+	$(CC) -c $(CCFLAGS) robot_ir_tx.c -o robot_ir_tx.o
+
+collider.o: collider.c collider.h
+	$(CC) -c $(CCFLAGS) collider.c -o collider.o
 
 newlib_stubs.o: Common/Source/newlib_stubs.c
 	$(CC) -c $(CCFLAGS) Common/Source/newlib_stubs.c -o newlib_stubs.o
