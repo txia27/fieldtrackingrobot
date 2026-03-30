@@ -1,6 +1,7 @@
 #ifndef DECODER_H
 #define DECODER_H
 #define ERROR 500
+#define COOLDOWN 500
 
 void initialize_decoder(void);
 void initialize_timer22(void);

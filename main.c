@@ -74,6 +74,10 @@ void main(void)
 	
 	int command = 0;
 	signal_flag = 0;
+
+	unsigned long ms = 0;
+	unsigned long last_time_press1 = 0;
+	unsigned long last_time_press2 = 0;
 /*
 
 
@@ -91,208 +95,258 @@ void main(void)
 	initialize_decoder();
 	initialize_timer22();
 
-	/*while(!startFlag){
+	while(1) {
 
-		if (signal_flag) // check if a new signal has been captured
+		/*while(!startFlag){
+
+			if (signal_flag) // check if a new signal has been captured
+			{
+				signal_flag = 0; // reset flag
+				//signal_length = pulse_width; // store the pulse width of the captured signal
+				command = decode(pulse_width); // decode the signal length to determine the command
+				
+				if (command > 0) {
+				//printf("Decoded Command: %d, pulse width: %d\r\n", command, pulse_width); // print the decoded command for debugging
+
+					// Execute the command (this is where you would add your motor control logic)
+					switch (command) {
+						case 1:
+							// Stop
+							robotStop();
+							waitms(100);
+							//printf("Case 1\r\n");
+							break;
+
+						case 2:
+							// Turn Left
+							turnLeft();
+							waitms(100);
+							robotStop();
+							//printf("Turning Left\r\n");
+							break;
+
+						case 3:
+							// Turn right
+							turnRight();
+							waitms(100);
+							robotStop();
+							//printf("Turning right\r\n");
+							break;
+
+						case 4:
+							// Move forward
+							robotForward();
+							waitms(100);
+							robotStop();
+							//printf("Moving Forward\r\n");
+							break;
+
+						case 5:
+							// Move reverse
+							robotBackward();
+							waitms(100);
+							robotStop();
+							//printf("Moving Backward\r\n");
+							break;
+
+						case 6:
+							// Turn around 180 degrees
+							if (ms - last_time_press1 > COOLDOWN) {
+								turnRight();
+								waitms(4400);
+								//printf("Turning around\r\n");
+								last_time_press1 = ms;
+							}
+							break;
+
+						case 7:
+							// Cycle modes/pathes
+
+							if (ms - last_time_press2 > COOLDOWN) {
+								//printf("Cycling modes\r\n");
+								
+								if (mode < 2) {
+									mode++;
+								} 
+								else {
+									mode = 0;
+								}
+								last_time_press2 = ms;
+							}
+
+							break;
+
+						case 8:
+							// Start predetermined path
+
+							if (mode == 0) {
+								strcpy (path, "FLLFRLRS");
+							}
+							else if (mode == 1) {
+								strcpy (path, "LRLRFFS");
+							}
+							else {
+								strcpy(path, "RFRLRLFS");
+							}
+							
+							startFlag = true;
+							
+							printf("Path %d selected\r\n", mode);
+							break;
+
+						case 9:
+							// Move forward-right
+							turnRight();
+							waitms(100);
+							robotStop();
+							robotForward();
+							waitms(100);
+							robotStop();
+							//printf("Moving Forward-Right\r\n");
+							break;
+
+						case 10:
+							// Move forward-left
+							turnLeft();
+							waitms(100);
+							robotStop();
+							robotForward();
+							waitms(100);
+							robotStop();
+							//printf("Moving Forward-Left\r\n");
+							break;
+
+						case 11:
+							// Move back-right
+							turnLeft();
+							waitms(100);
+							robotStop();
+							robotBackward();
+							waitms(100);
+							robotStop();
+							//printf("Moving Backwards-Right\r\n");
+							break;
+
+						case 12:
+							// Move reverse
+							turnRight();
+							waitms(100);
+							robotStop();
+							robotBackward();
+							waitms(100);
+							robotStop();
+							//printf("Moving Backwards-left\r\n");
+							break;
+							
+						default:
+							//printf("robot idling\r\n");
+							robotStop();
+							break;
+					}
+
+				}
+				pulse_width = 0;
+				command = 0;
+			}
+			ms += 100;
+			waitms(100);
+
+		}*/
+
+
+
+		PIDState pid;
+		PID_Init(&pid, 0.2f, 0.05f, 0.05f); // Kp, Ki, Kd
+		float base_speed = 500.0f; // Speed can be between 0 to 1000, tune as we test
+		uint16_t adcval;
+		uint16_t adcval2;
+		uint16_t adccenter;
+		
+		while (startFlag)
 		{
-			signal_flag = 0; // reset flag
-			//signal_length = pulse_width; // store the pulse width of the captured signal
-			command = decode(pulse_width); // decode the signal length to determine the command
-			
-			if (command > 0) {
-			//printf("Decoded Command: %d, pulse width: %d\r\n", command, pulse_width); // print the decoded command for debugging
 
-				// Execute the command (this is where you would add your motor control logic)
-				switch (command) {
-					case 1:
-						// Stop
-						robotStop();
-						//printf("Case 1\r\n");
-						break;
+			//adcval = ADC_Read_Channel(4); 
+			//adcval2 = ADC_Read_Channel(6);
+			//adccenter = ADC_Read_Channel(5);
+			ADC_Read_All(&adcval, &adccenter, &adcval2);
+			float error = (float)adcval - (float)adcval2 ; // Implement these variables later
+			float correction = PID_Compute(&pid, error);
+			Motor_Drive(base_speed, correction);
+			printf("ADC Values: %d %d %d | %d\r", adcval, adcval2, adccenter, 
+			detect_intersection(adcval, adcval2, adccenter));
+			fflush(stdout);
 
-					case 2:
-						// Turn Left
-						turnLeft();
-						robotStop();
-						//printf("Turning Left\r\n");
-						break;
-
-					case 3:
-						// Turn right
-						turnRight();
-						robotStop();
-						//printf("Turning right\r\n");
-						break;
-
-					case 4:
-						// Move forward
-						robotForward();
-						robotStop();
-						//printf("Moving Forward\r\n");
-						break;
-
-					case 5:
-						// Move reverse
-						robotBackward();
-						robotStop();
-						//printf("Moving Backward\r\n");
-						break;
-
-					case 6:
-						// Turn around 180 degrees
-						turnRight();
-						waitms(4400);
-						//printf("Turning around\r\n");
-						break;
-
-					case 7:
-						// Cycle modes/pathes
-						//printf("Cycling modes\r\n");
-						
-						if (mode < 2) {
-							mode++;
-						} 
-						else {
-							mode = 0;
+			if (signal_flag) // check if a new signal has been captured
+			{
+				signal_flag = 0; // reset flag
+				//signal_length = pulse_width; // store the pulse width of the captured signal
+				command = decode(pulse_width); // decode the signal length to determine the command
+				
+				if (command == 1) {
+					robotStop();
+					startFlag = false;
+					while(!startFlag) {
+						if (signal_flag) // check if a new signal has been captured
+						{
+							signal_flag = 0; // reset flag
+							//signal_length = pulse_width; // store the pulse width of the captured signal
+							command = decode(pulse_width); // decode the signal length to determine the command
+							
+							if (command == 8) {
+								startFlag = true;
+							}
+							pulse_width = 0;
+							command = 0;
 						}
-
-						break;
-
-					case 8:
-						// Start predetermined path
-
-						if (mode == 0) {
-							strcpy (path, "FLLFRLRS");
-						}
-						else if (mode == 1) {
-							strcpy (path, "LRLRFFS");
-						}
-						else {
-							strcpy(path, "RFRLRLFS");
-						}
-						
-						startFlag = true;
-						
-						printf("Path %d selected\r\n", mode);
-						break;
-
-					case 9:
-						// Move forward-right
-						turnRight();
-						robotStop();
-						robotForward();
-						robotStop();
-						//printf("Moving Forward-Right\r\n");
-						break;
-
-					case 10:
-						// Move forward-left
-						turnLeft();
-						robotStop();
-						robotForward();
-						robotStop();
-						//printf("Moving Forward-Left\r\n");
-						break;
-
-					case 11:
-						// Move back-right
-						turnLeft();
-						robotStop();
-						robotBackward();
-						robotStop();
-						//printf("Moving Backwards-Right\r\n");
-						break;
-
-					case 12:
-						// Move reverse
-						turnRight();
-						robotStop();
-						robotBackward();
-						robotStop();
-						//printf("Moving Backwards-left\r\n");
-						break;
-						
-					default:
-						//printf("robot idling\r\n");
-						robotStop();
-						break;
+					}
 				}
-
+				pulse_width = 0;
+				command = 0;
 			}
-			pulse_width = 0;
-			command = 0;
+
+			if ((detect_intersection(adcval, adcval2, adccenter)) && (clear_intersection > 500) && (adccenter > 100)) {
+				printf("Intersection Detected\n");
+
+				node_count++;
+				clear_intersection = 0;
+				//printf("Intersection detected! Total count: %d\r\n", node_count);
+				
+				if (path[node_count] == 0) {
+					printf("F\n");
+					robotForward();
+				} else if (path[node_count] == 1) {
+					printf("L\n");
+					robotStop();
+					waitms(2000);
+					turnLeft();
+					waitms(2200);
+					robotForward();
+				} else if (path[node_count] == 2) {
+					printf("R\n");
+					robotStop();
+					waitms(2000);
+					turnRight();
+					waitms(2200);
+					robotForward();
+				}
+				else if (path[node_count] == 3) {
+					robotStop();
+					printf("S");
+
+					startFlag = false;
+
+					// play ending song???
+				}
+				else {
+					printf("else\n");
+				}
+			}
+
+			clear_intersection++;
+			waitms(PID_DT_MS);
 		}
 
-		waitms(100);
-
-	}*/
-
-
-
-	PIDState pid;
-	PID_Init(&pid, 0.2f, 0.05f, 0.05f); // Kp, Ki, Kd
-	float base_speed = 500.0f; // Speed can be between 0 to 1000, tune as we test
-	uint16_t adcval;
-	uint16_t adcval2;
-	uint16_t adccenter;
-	
-    while (1)
-    {
-
-		//adcval = ADC_Read_Channel(4); 
-		//adcval2 = ADC_Read_Channel(6);
-		//adccenter = ADC_Read_Channel(5);
-		ADC_Read_All(&adcval, &adccenter, &adcval2);
-		float error = (float)adcval - (float)adcval2 ; // Implement these variables later
-		float correction = PID_Compute(&pid, error);
-		Motor_Drive(base_speed, correction);
-		printf("ADC Values: %d %d %d | %d\r", adcval, adcval2, adccenter, 
-        detect_intersection(adcval, adcval2, adccenter));
-		fflush(stdout);
-
-		if ((detect_intersection(adcval, adcval2, adccenter)) && (clear_intersection > 500) && (adccenter > 100)) {
-			printf("Intersection Detected\n");
-
- 			node_count++;
-			clear_intersection = 0;
-			//printf("Intersection detected! Total count: %d\r\n", node_count);
-			
-			if (path[node_count] == 0) {
-				printf("F\n");
-				robotForward();
-			} else if (path[node_count] == 1) {
-				printf("L\n");
-				robotStop();
-				waitms(2000);
-				turnLeft();
-				waitms(2200);
-				robotForward();
-			} else if (path[node_count] == 2) {
-				printf("R\n");
-				robotStop();
-				waitms(2000);
-				turnRight();
-				waitms(2200);
-				robotForward();
-			}
-			else if (path[node_count] == 3) {
-				robotStop();
-				printf("S");
-
-				while(1){
-					// robot finished, jut an infinite loop for now, can add something else if we want
-				}
-
-				// play ending song???
-			}
-			else {
-				printf("else\n");
-			}
-		}
-
-		clear_intersection++;
-		waitms(PID_DT_MS);
-    }
+	}
 		
 }
 
