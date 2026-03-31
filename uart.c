@@ -1,5 +1,5 @@
-#include "../Include/stm32l051xx.h"
-#include "../Include/uart2.h"
+#include "Common/Include/stm32l051xx.h"
+#include "uart.h"
 
 #define MAXBUFFER 64
 

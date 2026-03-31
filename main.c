@@ -68,7 +68,7 @@ bool detect_intersection(uint16_t a, uint16_t b, uint16_t c){
 
 void main(void)
 {	
-	UART2_Init();
+	//UART2_Init();
 
 	bool startFlag = false;
 	bool collisionFlag = false;
