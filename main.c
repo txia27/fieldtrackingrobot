@@ -71,6 +71,7 @@ void main(void)
 
 	bool startFlag = false;
 	bool collisionFlag = false;
+	bool pauseFlag = false;
 	int node_count = -1;
 	int mode = 0;
 	int clear_intersection = 250;
@@ -110,6 +111,25 @@ void main(void)
 	
 	printf("finished sending\r\n");
 	fflush(stdout);
+
+	// Peter Test Start
+while (1)
+{
+    // -------- TEST 1: LED ON --------
+    GPIOB->ODR |= (1 << 4);   // PB4 HIGH
+    waitms(1000);
+
+    GPIOB->ODR &= ~(1 << 4);  // OFF between tests
+
+    // -------- TEST 2: IR PWM --------
+    for (int i = 0; i < 5; i++)
+    {
+        ir_tx_send(1400);
+    }
+
+    waitms(1000);
+}
+	// Peter Test End
 
 	while(1) {
 		printf("Entered main loop\r\n");
@@ -335,8 +355,8 @@ void main(void)
 				
 				if (command == 1) {
 					robotStop();
-					startFlag = false;
-					while(!startFlag) {
+					pauseFlag = true;
+					while(pauseFlag) {
 						if (signal_flag) // check if a new signal has been captured
 						{
 							//I2C_Send_2byte(SLAVE_ADDRESS, GLED_packet);
@@ -346,8 +366,15 @@ void main(void)
 							command = decode(pulse_width); // decode the signal length to determine the command
 							
 							if (command == 8) {
-								startFlag = true;
+								pauseFlag = false;
 							}
+
+							if (command == 7) {
+								pauseFlag = false;
+								startFlag = false;
+								robotStop();
+							}
+
 							pulse_width = 0;
 							command = 0;
 						}
@@ -359,17 +386,57 @@ void main(void)
 
 			//Auto Recovery Mode
 			if(adcval < 100 && adcval2 < 100 && adccenter < 100){
-				//I2C_Send_2byte(SLAVE_ADDRESS, LOST_packet);
+
+				if (signal_flag) // check if a new signal has been captured
+				{
+
+					//I2C_Send_2byte(SLAVE_ADDRESS, GLED_packet);
+
+					signal_flag = 0; // reset flag
+					//signal_length = pulse_width; // store the pulse width of the captured signal
+					command = decode(pulse_width); // decode the signal length to determine the command
+					
+					if (command == 1) {
+						robotStop();
+						pauseFlag = true;
+						while(pauseFlag) {
+							if (signal_flag) // check if a new signal has been captured
+							{
+								//I2C_Send_2byte(SLAVE_ADDRESS, GLED_packet);
+								
+								signal_flag = 0; // reset flag
+								//signal_length = pulse_width; // store the pulse width of the captured signal
+								command = decode(pulse_width); // decode the signal length to determine the command
+								
+								if (command == 8) {
+									pauseFlag = false;
+								}
+
+								if (command == 7) {
+									pauseFlag = false;
+									startFlag = false;
+								}
+
+								pulse_width = 0;
+								command = 0;
+							}
+						}
+					}
+					pulse_width = 0;
+					command = 0;
+				}
 
 				robotStop();
 				waitms(100);
 
 				robotSpin();
-				waitms(1000);
+				waitms(773);
 
 				robotForward();
-				waitms(1750);
-			}
+				waitms(1500);
+
+				}
+			
 
 			// Collision Detection
 			poll_vl53_I2C();
@@ -388,7 +455,7 @@ void main(void)
 				}
 			}
 
-			if ((detect_intersection(adcval, adcval2, adccenter)) && (clear_intersection > 250) && (adccenter > 100)) {
+			if ((detect_intersection(adcval, adcval2, adccenter)) && (clear_intersection > 150) && (adccenter > 100)) {
 				//printf("Intersection Detected\n");
 
 				node_count++;
@@ -400,6 +467,7 @@ void main(void)
 					robotStop();
 					waitms(500);
 					robotForward();
+					waitms(100);
 				} else if (path[node_count] == 1) {
 					//printf("L\n");
 					robotStop();
@@ -407,6 +475,7 @@ void main(void)
 					turnLeft();
 					waitms(700);
 					robotForward();
+					waitms(100);
 				} else if (path[node_count] == 2) {
 					//printf("R\n");
 					robotStop();
@@ -414,6 +483,7 @@ void main(void)
 					turnRight();
 					waitms(700);
 					robotForward();
+					waitms(100);
 				}
 				else if (path[node_count] == 3) {
 					//I2C_Send_2byte(SLAVE_ADDRESS, DONE_packet);
