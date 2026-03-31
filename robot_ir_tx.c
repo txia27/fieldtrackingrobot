@@ -1,57 +1,55 @@
 #include "Common/Include/stm32l051xx.h"
 #include "robot_ir_tx.h"
 
-#define PWM_FREQ 38000
-
-static void delay_us(uint16_t us)
-{
-    for (volatile int i = 0; i < us * 8; i++);
-}
+// PB4 will be used as output
+#define IR_PIN (1 << 4)
 
 void ir_tx_init(void)
 {
-    // Enable GPIOA + TIM21
-    RCC->IOPENR |= RCC_IOPENR_GPIOAEN;
-    RCC->APB2ENR |= RCC_APB2ENR_TIM21EN;
+    // Enable GPIOB
+    RCC->IOPENR |= RCC_IOPENR_GPIOBEN;
 
-    // --- PA15 → AF mode ---
-    GPIOA->MODER &= ~(3 << (15 * 2));
-    GPIOA->MODER |=  (2 << (15 * 2));   // AF mode
+    // PB4 → output mode
+    GPIOB->MODER &= ~(3 << (4 * 2));
+    GPIOB->MODER |=  (1 << (4 * 2)); // general purpose output
 
-    // AF0 = TIM21_CH1 (on L0)
-    GPIOA->AFR[1] &= ~(0xF << ((15 - 8) * 4));
-    GPIOA->AFR[1] |=  (0 << ((15 - 8) * 4));
-
-    // --- Timer setup ---
-    TIM21->PSC = 0;
-    TIM21->ARR = (32000000L / PWM_FREQ) - 1;
-    TIM21->CCR1 = TIM21->ARR / 2;
-
-    // PWM mode 1
-    TIM21->CCMR1 &= ~(7 << 4);
-    TIM21->CCMR1 |=  (6 << 4);
-
-    // Start OFF
-    TIM21->CCER &= ~TIM_CCER_CC1E;
-
-    // Enable timer
-    TIM21->CR1 |= TIM_CR1_CEN;
+    // Make sure it's push-pull
+    GPIOB->OTYPER &= ~IR_PIN;
 }
 
-static inline void IR_on(void)
+static inline void IR_high(void)
 {
-    TIM21->CCER |= TIM_CCER_CC1E;
+    GPIOB->ODR |= IR_PIN;
 }
 
-static inline void IR_off(void)
+static inline void IR_low(void)
 {
-    TIM21->CCER &= ~TIM_CCER_CC1E;
+    GPIOB->ODR &= ~IR_PIN;
 }
 
+// Use TIM22 (already running at 1 MHz) for delay
+static void delay_us_tim22(uint16_t us)
+{
+    uint16_t start = TIM22->CNT;
+    while ((uint16_t)(TIM22->CNT - start) < us);
+}
+
+// Generate 38 kHz carrier
+static void IR_carrier(uint16_t duration_us)
+{
+    for (uint16_t i = 0; i < duration_us / 26; i++) // 26 µs period ≈ 38 kHz
+    {
+        IR_high();
+        delay_us_tim22(13);
+
+        IR_low();
+        delay_us_tim22(13);
+    }
+}
+
+// Send pulse (same protocol as before)
 void ir_tx_send(uint16_t pulse_us)
 {
-    IR_on();
-    delay_us(pulse_us);
-    IR_off();
-    delay_us(3000);
+    IR_carrier(pulse_us);
+    delay_us_tim22(3000); // spacing
 }

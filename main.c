@@ -15,6 +15,7 @@
 #include "Common/Include/serial.h"
 
 #define F_CPU 32000000L
+#define VL_CONNECTED 0
 
 void delay(int dly)
 {
@@ -45,8 +46,8 @@ void waitms(int len)
 //      VDDA -|5       28|- PB5
 //       PA0 -|6       27|- PB4
 //       PA1 -|7       26|- PB3
-//       PA2 -|8       25|- PA15
-//       PA3 -|9       24|- PA14
+//       PA2 -|8       25|- PA15 uart2 rx
+//       PA3 -|9       24|- PA14 uart2 tx
 //       PA4 -|10      23|- PA13
 //       PA5 -|11      22|- PA12
 //       PA6 -|12      21|- PA11
@@ -69,6 +70,7 @@ void main(void)
 	UART2_Init();
 
 	bool startFlag = false;
+	bool collisionFlag = false;
 	int node_count = -1;
 	int mode = 0;
 	int clear_intersection = 250;
@@ -81,24 +83,31 @@ void main(void)
 	unsigned long last_time_press1 = 0;
 	unsigned long last_time_press2 = 0;
 
+	uint16_t GLED_packet = (0x2 << 12);
+	uint16_t R1LED_packet = (0x3 << 12);
+	uint16_t R2LED_packet = (0x4 << 12);
+	uint16_t R3LED_packet = (0x5 << 12);
+	uint16_t AUTO_packet = (0x6 << 12);
+	uint16_t LOST_packet = (0x7 << 12);
+	uint16_t DONE_packet = (0x8 << 12);
+
+
 	ADC_Init();
 	Motor_Init();
 	initialize_decoder();
 	initialize_timer22();
+	printf("prior ir tx\r\n");
+	fflush(stdout);
 	ir_tx_init();
-	I2C_init();
-	check_success_vl53();
+	printf("after ir tx\r\n");
+	fflush(stdout);
+	//I2C_init();
+	printf("prior vl53");
+	fflush(stdout);
+	//check_success_vl53();
 	printf("Done Iniitliazation\r\n");
 	fflush(stdout);
 	
-	/*while (1)
-{
-for (int i = 0; i < 3; i++)
-{
-ir_tx_send(1400);
-}
-waitms(1000);
-}*/	
 	printf("finished sending\r\n");
 	fflush(stdout);
 
@@ -111,12 +120,15 @@ waitms(1000);
 		node_count = -1;
 		clear_intersection = 250;
 
-		poll_vl53_I2C(); //only polls once no while loops within this function, so it won't block the rest of the code from running. It will update the global variable "range" with the latest distance measurement from the VL53L0X sensor.
-		waitms(100);
+		//poll_vl53_I2C(); //only polls once no while loops within this function, so it won't block the rest of the code from running. It will update the global variable "range" with the latest distance measurement from the VL53L0X sensor.
+		waitms(50);
 		while(!startFlag){
-			poll_vl53_I2C();
+			//poll_vl53_I2C();
 			if(signal_flag)
 			{
+
+				//I2C_Send_2byte(SLAVE_ADDRESS, GLED_packet); // send signal feedback to I2C
+
 				signal_flag = 0; // reset flag
 				//signal_length = pulse_width; // store the pulse width of the captured signal
 				command = decode(pulse_width); // decode the signal length to determine the command
@@ -136,7 +148,7 @@ waitms(1000);
 						case 2:
 							// Turn Left
 							turnLeft();
-							waitms(100);
+							waitms(250);
 							robotStop();
 							//printf("Turning Left\r\n");
 							break;
@@ -144,7 +156,7 @@ waitms(1000);
 						case 3:
 							// Turn right
 							turnRight();
-							waitms(100);
+							waitms(250);
 							robotStop();
 							//printf("Turning right\r\n");
 							break;
@@ -152,7 +164,7 @@ waitms(1000);
 						case 4:
 							// Move forward
 							robotForward();
-							waitms(100);
+							waitms(250);
 							robotStop();
 							//printf("Moving Forward\r\n");
 							break;
@@ -160,7 +172,7 @@ waitms(1000);
 						case 5:
 							// Move reverse
 							robotBackward();
-							waitms(100);
+							waitms(250);
 							robotStop();
 							//printf("Moving Backward\r\n");
 							break;
@@ -168,8 +180,9 @@ waitms(1000);
 						case 6:
 							// Turn around 180 degrees
 							if (ms - last_time_press1 > COOLDOWN) {
-								turnRight();
-								waitms(4400);
+								robotSpin();
+								waitms(1400);
+								robotStop();
 								//printf("Turning around\r\n");
 								last_time_press1 = ms;
 							}
@@ -181,10 +194,16 @@ waitms(1000);
 							if (ms - last_time_press2 > COOLDOWN) {
 								//printf("Cycling modes\r\n");
 								
-								if (mode < 2) {
+								if (mode == 0) {
+									//I2C_Send_2byte(SLAVE_ADDRESS, R1LED_packet);
 									mode++;
 								} 
+								else if (mode == 1) {
+									//I2C_Send_2byte(SLAVE_ADDRESS, R2LED_packet);
+									mode++;
+								}
 								else {
+									//I2C_Send_2byte(SLAVE_ADDRESS, R3LED_packet);
 									mode = 0;
 								}
 								last_time_press2 = ms;
@@ -211,6 +230,7 @@ waitms(1000);
 								memcpy(path,buffer,size);
 							}
 							
+							//I2C_Send_2byte(SLAVE_ADDRESS, AUTO_packet);
 							startFlag = true;
 							
 							//printf("Path %d selected\r\n", mode);
@@ -271,15 +291,15 @@ waitms(1000);
 				command = 0;
 			}
 			ms += 100;
-			waitms(100);
+			waitms(50);
 
 		}
 
 
 
 		PIDState pid;
-		PID_Init(&pid, 0.2f, 0.05f, 0.05f); // Kp, Ki, Kd
-		float base_speed = 600.0f; // Speed can be between 0 to 1000, tune as we test
+		PID_Init(&pid, 0.1f, 0.05f, 0.01f); // Kp, Ki, Kd
+		float base_speed = 800.0f; // Speed can be between 0 to 1000, tune as we test
 		uint16_t adcval;
 		uint16_t adcval2;
 		uint16_t adccenter;
@@ -288,7 +308,6 @@ waitms(1000);
 
 		while (startFlag)
 		{
-			poll_vl53_I2C();
 			//adcval = ADC_Read_Channel(4); 
 			//adcval2 = ADC_Read_Channel(6);
 			//adccenter = ADC_Read_Channel(5);
@@ -307,6 +326,9 @@ waitms(1000);
 
 			if (signal_flag) // check if a new signal has been captured
 			{
+
+				//I2C_Send_2byte(SLAVE_ADDRESS, GLED_packet);
+
 				signal_flag = 0; // reset flag
 				//signal_length = pulse_width; // store the pulse width of the captured signal
 				command = decode(pulse_width); // decode the signal length to determine the command
@@ -317,6 +339,8 @@ waitms(1000);
 					while(!startFlag) {
 						if (signal_flag) // check if a new signal has been captured
 						{
+							//I2C_Send_2byte(SLAVE_ADDRESS, GLED_packet);
+							
 							signal_flag = 0; // reset flag
 							//signal_length = pulse_width; // store the pulse width of the captured signal
 							command = decode(pulse_width); // decode the signal length to determine the command
@@ -335,6 +359,8 @@ waitms(1000);
 
 			//Auto Recovery Mode
 			if(adcval < 100 && adcval2 < 100 && adccenter < 100){
+				//I2C_Send_2byte(SLAVE_ADDRESS, LOST_packet);
+
 				robotStop();
 				waitms(100);
 
@@ -342,10 +368,27 @@ waitms(1000);
 				waitms(1000);
 
 				robotForward();
-				waitms(1500);
+				waitms(1750);
 			}
 
-			if ((detect_intersection(adcval, adcval2, adccenter)) && (clear_intersection > 500) && (adccenter > 100)) {
+			// Collision Detection
+			//poll_vl53_I2C();
+
+			if(VL_CONNECTED){
+				if(range <= 95){
+					collisionFlag = true;
+					robotStop();
+				
+					while(collisionFlag){
+						//poll_vl53_I2C();
+						if(range >= 150){
+							collisionFlag = false;
+						}
+					}
+				}
+			}
+
+			if ((detect_intersection(adcval, adcval2, adccenter)) && (clear_intersection > 250) && (adccenter > 100)) {
 				//printf("Intersection Detected\n");
 
 				node_count++;
@@ -354,23 +397,26 @@ waitms(1000);
 				
 				if (path[node_count] == 0) {
 					//printf("F\n");
+					robotStop();
+					waitms(500);
 					robotForward();
 				} else if (path[node_count] == 1) {
 					//printf("L\n");
 					robotStop();
-					waitms(2000);
+					waitms(500);
 					turnLeft();
 					waitms(700);
 					robotForward();
 				} else if (path[node_count] == 2) {
 					//printf("R\n");
 					robotStop();
-					waitms(2000);
+					waitms(500);
 					turnRight();
 					waitms(700);
 					robotForward();
 				}
 				else if (path[node_count] == 3) {
+					//I2C_Send_2byte(SLAVE_ADDRESS, DONE_packet);
 					robotStop();
 					//printf("S");
 
