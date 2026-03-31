@@ -15,7 +15,7 @@
 #include "Common/Include/serial.h"
 
 #define F_CPU 32000000L
-#define VL_CONNECTED 0
+#define VL_CONNECTED 1
 
 void delay(int dly)
 {
@@ -101,10 +101,10 @@ void main(void)
 	ir_tx_init();
 	printf("after ir tx\r\n");
 	fflush(stdout);
-	//I2C_init();
+	I2C_init();//added
 	printf("prior vl53");
 	fflush(stdout);
-	//check_success_vl53();
+	check_success_vl53();//added
 	printf("Done Iniitliazation\r\n");
 	fflush(stdout);
 	
@@ -120,10 +120,10 @@ void main(void)
 		node_count = -1;
 		clear_intersection = 250;
 
-		//poll_vl53_I2C(); //only polls once no while loops within this function, so it won't block the rest of the code from running. It will update the global variable "range" with the latest distance measurement from the VL53L0X sensor.
+		poll_vl53_I2C(); //only polls once no while loops within this function, so it won't block the rest of the code from running. It will update the global variable "range" with the latest distance measurement from the VL53L0X sensor.
 		waitms(50);
 		while(!startFlag){
-			//poll_vl53_I2C();
+			poll_vl53_I2C();
 			if(signal_flag)
 			{
 
@@ -372,7 +372,7 @@ void main(void)
 			}
 
 			// Collision Detection
-			//poll_vl53_I2C();
+			poll_vl53_I2C();
 
 			if(VL_CONNECTED){
 				if(range <= 95){
@@ -380,7 +380,7 @@ void main(void)
 					robotStop();
 				
 					while(collisionFlag){
-						//poll_vl53_I2C();
+						poll_vl53_I2C();
 						if(range >= 150){
 							collisionFlag = false;
 						}
