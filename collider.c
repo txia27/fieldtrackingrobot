@@ -70,8 +70,8 @@ void poll_vl53_I2C(void){
 	        // is found or the buffer is full, so flush(stdout); to transmit now!!!
 	        fflush(stdout); 
 
-			//uint16_t packet = (0x1 << 12) | (range & 0x0FFF);
-			//I2C_Send_2byte(SLAVE_ADDRESS, packet);
+			
 		}
 
 }
+

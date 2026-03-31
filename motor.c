@@ -138,3 +138,7 @@ void robotStop(void){
 void robotSpin(void){
     Motor_SetPWM(1000,-1000);
 }
+
+void robotSpinOther(void){
+    Motor_SetPWM(-1000,1000);
+}

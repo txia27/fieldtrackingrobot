@@ -67,3 +67,9 @@ void ir_tx_send(uint16_t pulse_us)
     IR_carrier(pulse_us);
     delay_us_tim22(3000); // spacing
 }
+
+void transmit_pulse_us(uint16_t duration_us)
+{
+IR_carrier(duration_us);
+delay_us_tim22(3000); // gap
+}

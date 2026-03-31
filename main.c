@@ -73,6 +73,10 @@ void main(void)
 	bool startFlag = false;
 	bool collisionFlag = false;
 	bool pauseFlag = false;
+	bool itsMyFirstTimeBeGentle = true;
+	bool iveNeverDoneAnythingLikeThisBefore = true;
+	bool exitFlag = false;
+	bool firstTimeButtPlugFlag = true;
 	int node_count = -1;
 	int mode = 0;
 	int clear_intersection = 250;
@@ -93,6 +97,7 @@ void main(void)
 	uint16_t LOST_packet = (0x7 << 12);
 	uint16_t DONE_packet = (0x8 << 12);
 
+	uint16_t packet = 0x0000;
 
 	ADC_Init();
 	Motor_Init();
@@ -113,7 +118,7 @@ void main(void)
 	printf("finished sending\r\n");
 	fflush(stdout);
 
-	// Peter Test Start
+	/* Peter Test Start
 while (1)
 {
     // -------- TEST 1: LED ON --------
@@ -130,7 +135,7 @@ while (1)
 
     waitms(1000);
 }
-	// Peter Test End
+	Peter Test End */ 
 
 	while(1) {
 		printf("Entered main loop\r\n");
@@ -141,10 +146,28 @@ while (1)
 		node_count = -1;
 		clear_intersection = 250;
 
-		poll_vl53_I2C(); //only polls once no while loops within this function, so it won't block the rest of the code from running. It will update the global variable "range" with the latest distance measurement from the VL53L0X sensor.
+		if(exitFlag){
+			iveNeverDoneAnythingLikeThisBefore = true;
+			itsMyFirstTimeBeGentle = true;
+			firstTimeButtPlugFlag = true;
+			exitFlag = false;
+		}
+
+		if(iveNeverDoneAnythingLikeThisBefore){
+			iveNeverDoneAnythingLikeThisBefore = false;
+			transmit_pulse_us(SIG_MANUAL);
+		}
+
+		//poll_vl53_I2C(); //only polls once no while loops within this function, so it won't block the rest of the code from running. It will update the global variable "range" with the latest distance measurement from the VL53L0X sensor.
+		//packet = (0x1 <<12) | (range & 0x0FFF);
+		//I2C_Send_2byte(SLAVE_ADDRESS, packet);
 		waitms(50);
 		while(!startFlag){
-			poll_vl53_I2C();
+			
+			//poll_vl53_I2C();
+			//packet = (0x1 <<12) | (range & 0x0FFF);
+			//I2C_Send_2byte(SLAVE_ADDRESS, packet);
+
 			if(signal_flag)
 			{
 
@@ -216,14 +239,17 @@ while (1)
 								//printf("Cycling modes\r\n");
 								
 								if (mode == 0) {
+									transmit_pulse_us(SIG_MODE1);
 									//I2C_Send_2byte(SLAVE_ADDRESS, R1LED_packet);
 									mode++;
 								} 
 								else if (mode == 1) {
+									transmit_pulse_us(SIG_MODE2);
 									//I2C_Send_2byte(SLAVE_ADDRESS, R2LED_packet);
 									mode++;
 								}
 								else {
+									transmit_pulse_us(SIG_MODE0);
 									//I2C_Send_2byte(SLAVE_ADDRESS, R3LED_packet);
 									mode = 0;
 								}
@@ -253,6 +279,7 @@ while (1)
 							
 							//I2C_Send_2byte(SLAVE_ADDRESS, AUTO_packet);
 							startFlag = true;
+							transmit_pulse_us(SIG_START);
 							
 							//printf("Path %d selected\r\n", mode);
 							break;
@@ -329,16 +356,16 @@ while (1)
 
 		while (startFlag)
 		{
-			//adcval = ADC_Read_Channel(4); 
-			//adcval2 = ADC_Read_Channel(6);
-			//adccenter = ADC_Read_Channel(5);
+			if(itsMyFirstTimeBeGentle){
+				itsMyFirstTimeBeGentle = false;
+				transmit_pulse_us(SIG_AUTO);
+			}
+
 			ADC_Read_All(&adcval, &adccenter, &adcval2);
 			float error = (float)adcval - (float)adcval2 ; // Implement these variables later
 			float correction = PID_Compute(&pid, error);
 			Motor_Drive(base_speed, correction);
-			//printf("ADC Values: %d %d %d | %d\r", adcval, adcval2, adccenter,
-			//detect_intersection(adcval, adcval2, adccenter));
-			//fflush(stdout);
+			
 
 			if(poll_count++ >= 5) {
 				poll_count = 0;
@@ -373,6 +400,7 @@ while (1)
 							if (command == 7) {
 								pauseFlag = false;
 								startFlag = false;
+								exitFlag = true;
 								robotStop();
 							}
 
@@ -386,7 +414,7 @@ while (1)
 			}
 
 			//Auto Recovery Mode
-			if(adcval < 100 && adcval2 < 100 && adccenter < 100){
+			if(adcval < 90 && adcval2 < 90 && adccenter < 90){
 
 				if (signal_flag) // check if a new signal has been captured
 				{
@@ -416,6 +444,7 @@ while (1)
 								if (command == 7) {
 									pauseFlag = false;
 									startFlag = false;
+									exitFlag = true;
 								}
 
 								pulse_width = 0;
@@ -430,35 +459,68 @@ while (1)
 				robotStop();
 				waitms(100);
 
+		// Try spinning in small increments, checking sensors each step
+		uint8_t found = 0;
+		uint8_t attempts = 0;
+		const uint8_t MAX_ATTEMPTS = 20;     // ~360 degrees total
+		const uint16_t SPIN_STEP_MS = 200;   // tune this per your robot's turn rate
+
+		while (!found && attempts < MAX_ATTEMPTS) {
+			if (attempts < MAX_ATTEMPTS / 2) {
 				robotSpin();
-				waitms(773);
+			} else {
+				robotSpinOther();
+			}
+			waitms(SPIN_STEP_MS);
 
-				robotForward();
-				waitms(1500);
+			ADC_Read_All(&adcval, &adccenter, &adcval2);
+			
+			// Check sensors WITHOUT stopping
+			if (adcval >= 90 || adcval2 >= 90 || adccenter >= 90) {
+				found = 1;
+				robotStop();
+				break;
+			}
+			attempts++;
+		}
+	robotStop(); // only stop once line is found
 
-				}
+	if(!found){
+		robotForward();
+		waitms(350);
+	}
+}
 			
 
 			// Collision Detection
-			poll_vl53_I2C();
+			/*poll_vl53_I2C();
+			packet = (0x1 <<12) | (range & 0x0FFF);
+			I2C_Send_2byte(SLAVE_ADDRESS, packet);
 
 			if(VL_CONNECTED){
 				if(range <= 95){
 					collisionFlag = true;
 					robotStop();
+
+					if(firstTimeButtPlugFlag){
+						transmit_pulse_us(SIG_COLLISION);
+					}
 				
 					while(collisionFlag){
 						poll_vl53_I2C();
+						packet = (0x1 <<12) | (range & 0x0FFF);
+						I2C_Send_2byte(SLAVE_ADDRESS, packet);
+
 						if(range >= 150){
 							collisionFlag = false;
 						}
 					}
 				}
-			}
+			}*/
 
 			if ((detect_intersection(adcval, adcval2, adccenter)) && (clear_intersection > 150) && (adccenter > 100)) {
 				//printf("Intersection Detected\n");
-
+				transmit_pulse_us(SIG_INTERSECTION);
 				node_count++;
 				clear_intersection = 0;
 				//printf("Intersection detected! Total count: %d\r\n", node_count);
@@ -492,6 +554,9 @@ while (1)
 					//printf("S");
 
 					startFlag = false;
+					exitFlag = true;
+
+					transmit_pulse_us(SIG_FINISH);
 
 					// play ending song???
 				}
