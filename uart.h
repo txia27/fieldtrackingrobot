@@ -1,14 +1,12 @@
-#ifndef UART_H
-#define UART_H
+#ifndef UART2_H
+#define UART2_H
 
-#include <stdint.h>
+void UART2_Init(int baud);
 
-void UART2_Init(void);
+int  UART2_Write(int count, unsigned char *buf);
+int  UART2_Read(int max, unsigned char *buf);
 
-void UART2_WriteChar(char c);
-
-void UART2_WriteString(char *s);
-
-void UART2_WriteInt(uint16_t val);
+void UART2_Putc(char c);
+void UART2_Puts(char *s);
 
 #endif
