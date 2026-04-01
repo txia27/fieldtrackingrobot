@@ -491,32 +491,31 @@ while (1)
 	}
 }
 			
-
 			// Collision Detection
-			/*poll_vl53_I2C();
-			packet = (0x1 <<12) | (range & 0x0FFF);
-			I2C_Send_2byte(SLAVE_ADDRESS, packet);
+			poll_vl53_I2C();
+			//packet = (0x1 <<12) | (range & 0x0FFF);
+			//I2C_Send_2byte(SLAVE_ADDRESS, packet);
 
 			if(VL_CONNECTED){
 				if(range <= 95){
 					collisionFlag = true;
 					robotStop();
 
-					if(firstTimeButtPlugFlag){
+					/*if(firstTimeButtPlugFlag){
 						transmit_pulse_us(SIG_COLLISION);
-					}
+					}*/
 				
 					while(collisionFlag){
 						poll_vl53_I2C();
-						packet = (0x1 <<12) | (range & 0x0FFF);
-						I2C_Send_2byte(SLAVE_ADDRESS, packet);
+						//packet = (0x1 <<12) | (range & 0x0FFF);
+						//I2C_Send_2byte(SLAVE_ADDRESS, packet);
 
 						if(range >= 150){
 							collisionFlag = false;
 						}
 					}
 				}
-			}*/
+			}
 
 			if ((detect_intersection(adcval, adcval2, adccenter)) && (clear_intersection > 150) && (adccenter > 100)) {
 				//printf("Intersection Detected\n");
@@ -536,7 +535,7 @@ while (1)
 					robotStop();
 					waitms(500);
 					turnLeft();
-					waitms(700);
+					waitms(1000);
 					robotForward();
 					waitms(100);
 				} else if (path[node_count] == 2) {
@@ -544,7 +543,7 @@ while (1)
 					robotStop();
 					waitms(500);
 					turnRight();
-					waitms(700);
+					waitms(1000);
 					robotForward();
 					waitms(100);
 				}
